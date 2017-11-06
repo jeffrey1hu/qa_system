@@ -88,7 +88,7 @@ def mask_dataset(data_dir, set_names=['train', 'val'], suffixes=['context', 'que
     dataset = dict()
     for sn in set_names:
         for sf in suffixes:
-            data_path = pjoin(data_dir, sn + '.id.' + sf)
+            data_path = pjoin(data_dir, sn + '.ids.' + sf)
             logging.info('------------ cute line ----------------')
             logging.info('Reading dataset: {}-{}'.format(sn, sf))
 
