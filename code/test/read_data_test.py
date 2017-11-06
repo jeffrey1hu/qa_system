@@ -8,7 +8,8 @@ sys.path += [path + x for x in ['']]
 
 from utils.read_data import mask_dataset, read_raw_answers, read_answers
 
-data_dir = "../data/squad"
+data_dir = path + "/data/squad"
+print data_dir
 
 
 def test_mask_dataset():
