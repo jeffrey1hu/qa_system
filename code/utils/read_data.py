@@ -2,7 +2,7 @@
 read data
 """
 from os.path import join as pjoin
-from Config import Config as cfg
+from config import Config as cfg
 import numpy as np
 import logging
 import os
