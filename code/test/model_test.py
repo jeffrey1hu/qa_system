@@ -57,7 +57,7 @@ def test_model(num_examples, context=None, question=None, embedding=None, answer
 
         con_lstm_fw_cell = rnn.BasicLSTMCell(num_hidden)
         con_lstm_bw_cell = rnn.BasicLSTMCell(num_hidden)
-        logging.info('hidden stats size of context lstm is {}'.format(con_lstm_fw_cell.state_size))
+        # logging.info('hidden stats size of context lstm is {}'.format(con_lstm_fw_cell.state_size))
 
         con_outputs, con_outputs_states = tf.nn.bidirectional_dynamic_rnn(con_lstm_fw_cell,con_lstm_bw_cell,
                                                         context_embed,
@@ -87,6 +87,22 @@ def test_model(num_examples, context=None, question=None, embedding=None, answer
 
         assert (num_examples, question_max_len, 2 * num_hidden) == H_context.shape, \
             'the shape of H_context should be {} but it is {}'.format((num_examples, question_max_len, 2 * num_hidden),
+                                                                                          H_context.shape)
+
+        match_lstm_fw_cell = matchLSTMcell(2 * num_hidden, 2 * num_hidden, H_question, question_m)
+        match_lstm_bw_cell = matchLSTMcell(2 * num_hidden, 2 * num_hidden, H_question, question_m)
+
+        match_outputs, _, _ = rnn.static_bidirectional_rnn(match_lstm_fw_cell,
+                                                     match_lstm_bw_cell,
+                                                     H_context,
+                                                     sequence_length=sequence_length(context_m),
+                                                     dtype=tf.float32, scope='match_lstm')
+        H_r = tf.concat(match_outputs, axis=2)
+
+        logging.info('the shape of h_r is {}'.format(H_r.get_shape().as_list()))
+
+        assert (num_examples, context_max_len, 2 * num_hidden) == H_context.shape, \
+            'the shape of H_r should be {} but it is {}'.format((num_examples, context_max_len, 2 * num_hidden),
                                                                                           H_context.shape)
     pass
 
