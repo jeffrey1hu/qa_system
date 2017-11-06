@@ -36,3 +36,4 @@ def test_read_answers():
 if __name__ == '__main__':
     test_mask_dataset()
     test_read_raw_answers()
+    test_read_answers()
