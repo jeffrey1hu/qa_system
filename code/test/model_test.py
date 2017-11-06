@@ -58,6 +58,7 @@ def test_model(num_examples, context=None, question=None, embedding=None, answer
 
         con_lstm_fw_cell = rnn.BasicLSTMCell(num_hidden)
         con_lstm_bw_cell = rnn.BasicLSTMCell(num_hidden)
+        logging.info('hidden stats size of context lstm is {}'.format(con_lstm_fw_cell.state_size))
 
 
 
