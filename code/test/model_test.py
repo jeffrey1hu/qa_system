@@ -16,7 +16,6 @@ import tensorflow.contrib.rnn as rnn
 from matchLSTM_cell_test import matchLSTMcell
 
 data_dir = cfg.DATA_DIR
-test_file_path = pjoin(root_dir, 'cache', 'test.test_masked.npy')
 context_max_len = cfg.context_max_len
 question_max_len = cfg.question_max_len
 embed_dim  = 100
