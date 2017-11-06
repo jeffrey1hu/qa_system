@@ -22,7 +22,7 @@ def test_mask_dataset():
 def test_read_raw_answers():
     logging.info("test_read_raw_answers")
     raw_answers = read_answers(data_dir)
-    print read_answers.keys()
+    print raw_answers.keys()
     for k, v in raw_answers.iteritems():
         print k, len(v), v[0]
 
