@@ -70,6 +70,24 @@ def test_model(num_examples, context=None, question=None, embedding=None, answer
         H_context = tf.concat(con_outputs, axis=2)
         logging.info('the shape of h_context is {}'.format(H_context.get_shape().as_list()))
 
+        assert (num_examples, context_max_len, 2 * num_hidden) == H_context.shape, \
+            'the shape of H_context should be {} but it is {}'.format((num_examples, context_max_len, 2 * num_hidden),
+                                                                                          H_context.shape)
+
+        question_lstm_fw_cell = rnn.BasicLSTMCell(num_hidden, forget_bias=1.0)
+        question_lstm_bw_cell = rnn.BasicLSTMCell(num_hidden, forget_bias=1.0)
+        question_outputs, question_outputs_states = rnn.static_bidirectional_rnn(question_lstm_fw_cell,
+                                                                     question_lstm_bw_cell,
+                                                                     question_embed,
+                                                                     sequence_length=sequence_length(question_m),
+                                                                     dtype=tf.float32, scope="question_lstm")
+
+        H_question = tf.concat(question_outputs, axis=2)
+        logging.info('the shape of h_question is {}'.format(H_question.get_shape().as_list()))
+
+        assert (num_examples, question_max_len, 2 * num_hidden) == H_context.shape, \
+            'the shape of H_context should be {} but it is {}'.format((num_examples, question_max_len, 2 * num_hidden),
+                                                                                          H_context.shape)
     pass
 
 
