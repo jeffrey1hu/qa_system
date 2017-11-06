@@ -7,12 +7,24 @@ import logging
 
 import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
+
 import tensorflow as tf
+import tensorflow.contrib.rnn as rnn
 from tensorflow.python.ops import variable_scope as vs
 
 from evaluate import exact_match_score, f1_score
+from utils.matchLSTM_cell import matchLSTMcell
+from config import Config as cfg
 
 logging.basicConfig(level=logging.INFO)
+
+context_max_len = cfg.context_max_len
+question_max_len = cfg.question_max_len
+n_hidden = cfg.n_hidden
+dtype = cfg.dtype
+keep_prob = cfg.keep_prob
+learning_rate = cfg.learning_rate
+max_grad_norm = cfg.max_grad_norm
 
 
 def get_optimizer(opt):
@@ -24,13 +36,24 @@ def get_optimizer(opt):
         assert (False)
     return optfn
 
+def sequence_length(sequence_mask):
+    """
+    Args:
+        sequence_mask: Bool tensor with shape -> [batch_size, q]
+
+    Returns:
+        tf.int32, [batch_size]
+
+    """
+    return tf.reduce_sum(tf.cast(sequence_mask, tf.int32), axis=1)
+
 
 class Encoder(object):
     def __init__(self, size, vocab_dim):
         self.size = size
         self.vocab_dim = vocab_dim
 
-    def encode(self, inputs, masks, encoder_state_input):
+    def encode(self, context, context_m, question, question_m, embedding):
         """
         In a generalized encode function, you pass in your inputs,
         masks, and an initial
@@ -45,15 +68,70 @@ class Encoder(object):
                  It can be context-level representation, word-level representation,
                  or both.
         """
+        # context shape -> (None, P)
+        # context embed -> (None, P, n)
+        context_embed = tf.nn.embedding_lookup(embedding, context)
 
-        return
+        question_embed = tf.nn.embedding_lookup(embedding, question)
+
+        with tf.variable_scope('context_lstm'):
+            con_lstm_fw_cell = rnn.BasicLSTMCell(n_hidden, forget_bias=1.0)
+            con_lstm_bw_cell = rnn.BasicLSTMCell(n_hidden, forget_bias=1.0)
+            # shape of outputs -> [(Batch_size, l) * P,]
+            # todo make sure the shape of outputs
+            outputs, _, _ = rnn.static_bidirectional_rnn(con_lstm_fw_cell,
+                                                         con_lstm_bw_cell,
+                                                         context_embed,
+                                                         sequence_length=sequence_length(context_m),
+                                                         dtype=dtype)
+
+        # need H_context as dim (Batch_size, hidden_size, P)
+        # dimension of outputs
+        with tf.variable_scope('H_context'):
+            # H_context -> (batch_size, P, 2n)
+            H_context = tf.stack(outputs, axis=1)
+            # tf.concat would generate (batch_size, hidden_size * P)
+            # tf.concat
+            H_context = tf.nn.dropout(H_context, keep_prob=keep_prob)
+
+        with tf.variable_scope('question_lstm'):
+            question_lstm_fw_cell = rnn.BasicLSTMCell(n_hidden, forget_bias=1.0)
+            question_lstm_bw_cell = rnn.BasicLSTMCell(n_hidden, forget_bias=1.0)
+            # shape of outpus -> [(Batch_size, l) * Q,]
+            outputs, _, _ = rnn.static_bidirectional_rnn(question_lstm_fw_cell,
+                                                         question_lstm_bw_cell,
+                                                         question_embed,
+                                                         sequence_length=sequence_length(question_m),
+                                                         dtype=dtype)
+
+        with tf.variable_scope('H_question'):
+            # H_question -> (batch_size, Q, l)
+            H_question = tf.stack(outputs, axis=1)
+            H_question = tf.nn.dropout(H_question, keep_prob=keep_prob)
+
+        with tf.variable_scope('H_match_lstm'):
+            match_lstm_fw_cell = matchLSTMcell(2 * n_hidden, self.size, H_question, question_m)
+            match_lstm_bw_cell = matchLSTMcell(2 * n_hidden, self.size, H_question, question_m)
+
+            outputs, _, _ = rnn.static_bidirectional_rnn(match_lstm_fw_cell,
+                                                         match_lstm_bw_cell,
+                                                         H_context,
+                                                         sequence_length=sequence_length(context_m),
+                                                         dtype=dtype)
+
+        # H_match -> (batch_size, Q, 2n)
+        with tf.variable_scope('H_match'):
+            H_r = tf.stack(outputs, axis=1)
+            H_r = tf.nn.dropout(H_r, keep_prob=keep_prob)
+
+        return H_r
 
 
 class Decoder(object):
     def __init__(self, output_size):
         self.output_size = output_size
 
-    def decode(self, knowledge_rep):
+    def decode(self, H_r, context_m):
         """
         takes in a knowledge representation
         and output a probability estimation over
@@ -65,11 +143,52 @@ class Decoder(object):
                               decided by how you choose to implement the encoder
         :return:
         """
+        # shape -> (b, q, 4n)
+        H_r_shape = H_r.get_shape().as_list()
+        initializer = tf.contrib.layers.xavier_initializer()
 
-        return
+        with tf.variable_scope("decoder"):
+            W_r = tf.get_variable("V_r", shape=[n_hidden * 4, n_hidden * 2], dtype=dtype, initializer=initializer)
+
+            W_f = tf.get_variable("W_f", shape=[n_hidden * 2, 1], dtype=dtype, initializer=initializer)
+
+            W_h = tf.get_variable("W_h", shape=[n_hidden * 4, n_hidden * 2], dtype=dtype, initializer=initializer)
+
+            B_r = tf.get_variable("B_r", shape=[n_hidden * 2], dtype=dtype)
+            B_f = tf.get_variable("B_f", shape=[], dtype=dtype)
+
+            W_r_e = tf.tile(tf.expand_dims(W_r, axis=0), multiples=[H_r_shape[0], 1, 1])
+            W_f_e = tf.tile(tf.expand_dims(W_f, axis=0), multiples=[H_r_shape[0], 1, 1])
+            W_h_e = tf.tile(tf.expand_dims(W_h, axis=0), multiples=[H_r_shape[0], 1, 1])
+
+            # f1 -> (b, q, 2n)
+            f1 = tf.nn.tanh(tf.matmul(H_r, W_r_e) + B_r)
+            # s_score -> (b, q, 1)
+            s_score = tf.matmul(f1, W_f_e) + B_f
+            # s_score -> (b, q)
+            s_score = tf.squeeze(s_score, axis=2)
+
+            # the prob distribution of start index
+            s_prob = tf.nn.softmax(s_score)
+            s_prob = s_prob * context_m
+            # Hr_attend -> (batch_size, 4n)
+            Hr_attend = tf.reduce_sum(H_r * tf.expand_dims(s_prob, axis=2), axis=1)
+
+            f2 = tf.nn.tanh(tf.matmul(H_r, W_r_e)
+                            + tf.matmul(tf.tile(tf.expand_dims(Hr_attend, axis=1), multiples=[1, H_r_shape[1], 1]), W_h_e)
+                            + B_r)
+
+            e_score = tf.matmul(f2, W_f_e) + B_f
+            e_score = tf.squeeze(e_score, axis=2)
+
+            e_prob = tf.nn.softmax(e_score)
+            e_prob = tf.multiply(e_prob, context_m)
+
+        return s_score, e_score
+
 
 class QASystem(object):
-    def __init__(self, encoder, decoder, *args):
+    def __init__(self, encoder, decoder, embed_path):
         """
         Initializes your System
 
@@ -77,8 +196,19 @@ class QASystem(object):
         :param decoder: a decoder that you constructed in train.py
         :param args: pass in more arguments as needed
         """
+        self.encoder = encoder
+        self.decoder = decoder
+        self.embed_path = embed_path
 
         # ==== set up placeholder tokens ========
+        self.context = tf.placeholder(tf.int32, shape=(None, context_max_len))
+        self.context_m = tf.placeholder(tf.bool, shape=(None, context_max_len))
+
+        self.question = tf.placeholder(tf.int32, shape=(None, question_max_len))
+        self.question_m = tf.placeholder(tf.bool, shape=(None, question_max_len))
+
+        self.answer_s = tf.placeholder(tf.int32, shape=(None,))
+        self.answer_e = tf.placeholder(tf.int32, shape=(None,))
 
 
         # ==== assemble pieces ====
@@ -88,8 +218,17 @@ class QASystem(object):
             self.setup_loss()
 
         # ==== set up training/updating procedure ====
-        pass
+        self.optimizer = tf.train.AdamOptimizer(learning_rate)
+        grad_var = self.optimizer.compute_gradients(self.final_loss)
+        grad = [i[0] for i in grad_var]
+        var = [i[1] for i in grad_var]
 
+        grad, use_norm = tf.clip_by_global_norm(grad, max_grad_norm)
+
+        self.train_op = self.optimizer.apply_gradients(zip(grad, var))
+
+        self.saver = tf.train.Saver()
+        self.merged = tf.summary.merge_all()
 
     def setup_system(self):
         """
@@ -98,7 +237,9 @@ class QASystem(object):
         to assemble your reading comprehension system!
         :return:
         """
-        raise NotImplementedError("Connect all parts of your system here!")
+        H_r = self.encoder.encode(self.context, self.context_m, self.question, self.question_m, self.embedding)
+
+        self.s_score, self.e_score = self.decoder.decode(H_r, self.context_m)
 
 
     def setup_loss(self):
@@ -107,7 +248,10 @@ class QASystem(object):
         :return:
         """
         with vs.variable_scope("loss"):
-            pass
+            loss_s = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.answer_s, logits=self.s_score)
+            loss_e = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.answer_e, logits=self.e_score)
+
+        self.final_loss = tf.reduce_mean(loss_e + loss_s)
 
     def setup_embeddings(self):
         """
@@ -115,7 +259,8 @@ class QASystem(object):
         :return:
         """
         with vs.variable_scope("embeddings"):
-            pass
+            self.embedding = np.load(self.embed_path)['glove']
+            self.embedding = tf.Variable(self.embedding, dtype=tf.float32, trainable=False)
 
     def optimize(self, session, train_x, train_y):
         """
@@ -221,7 +366,7 @@ class QASystem(object):
 
         return f1, em
 
-    def train(self, session, dataset, train_dir):
+    def train(self, session, dataset, answers, train_dir):
         """
         Implement main training loop
 

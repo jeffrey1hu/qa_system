@@ -1,14 +1,17 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+# from __future__ import absolute_import
+# from __future__ import division
+# from __future__ import print_function
 
 import os
 import json
 
+import numpy as np
 import tensorflow as tf
 
 from qa_model import Encoder, QASystem, Decoder
 from os.path import join as pjoin
+from utils.read_data import mask_dataset, read_answers, read_raw_answers
+from config import Config as cfg
 
 import logging
 
@@ -79,16 +82,21 @@ def get_normalized_train_dir(train_dir):
 def main(_):
 
     # Do what you need to load datasets from FLAGS.data_dir
-    dataset = None
+    set_names = cfg.set_names
+    suffixes = cfg.suffixes
+    dataset = mask_dataset(FLAGS.data_dir, set_names=set_names, suffixes=suffixes)
+    answers = read_answers(FLAGS.data_dir)
+    raw_answers = read_raw_answers(FLAGS.data_dir)
 
     embed_path = FLAGS.embed_path or pjoin("data", "squad", "glove.trimmed.{}.npz".format(FLAGS.embedding_size))
     vocab_path = FLAGS.vocab_path or pjoin(FLAGS.data_dir, "vocab.dat")
+
     vocab, rev_vocab = initialize_vocab(vocab_path)
 
     encoder = Encoder(size=FLAGS.state_size, vocab_dim=FLAGS.embedding_size)
     decoder = Decoder(output_size=FLAGS.output_size)
 
-    qa = QASystem(encoder, decoder)
+    qa = QASystem(encoder, decoder, embed_path)
 
     if not os.path.exists(FLAGS.log_dir):
         os.makedirs(FLAGS.log_dir)
@@ -104,7 +112,7 @@ def main(_):
         initialize_model(sess, qa, load_train_dir)
 
         save_train_dir = get_normalized_train_dir(FLAGS.train_dir)
-        qa.train(sess, dataset, save_train_dir)
+        qa.train(sess, dataset, answers, save_train_dir)
 
         qa.evaluate_answer(sess, dataset, vocab, FLAGS.evaluate, log=True)
 
