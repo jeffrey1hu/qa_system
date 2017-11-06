@@ -71,12 +71,12 @@ def test_model(num_examples, context=None, question=None, embedding=None, answer
         logging.info('the shape of h_context is {}'.format(H_context.get_shape().as_list()))
 
         assert (num_examples, context_max_len, 2 * num_hidden) == H_context.shape, \
-            'the shape of H_context should be {} but it is {}'.format((num_examples, context_max_len, 2 * num_hidden),
-                                                                                          H_context.shape)
+            'the shape of H_context should be {} but it is {}'\
+                .format((num_examples, context_max_len, 2 * num_hidden), H_context.shape)
 
         question_lstm_fw_cell = rnn.BasicLSTMCell(num_hidden, forget_bias=1.0)
         question_lstm_bw_cell = rnn.BasicLSTMCell(num_hidden, forget_bias=1.0)
-        question_outputs, question_outputs_states = rnn.static_bidirectional_rnn(question_lstm_fw_cell,
+        question_outputs, question_outputs_states = tf.nn.bidirectional_dynamic_rnn(question_lstm_fw_cell,
                                                                      question_lstm_bw_cell,
                                                                      question_embed,
                                                                      sequence_length=sequence_length(question_m),
@@ -85,14 +85,14 @@ def test_model(num_examples, context=None, question=None, embedding=None, answer
         H_question = tf.concat(question_outputs, axis=2)
         logging.info('the shape of h_question is {}'.format(H_question.get_shape().as_list()))
 
-        assert (num_examples, question_max_len, 2 * num_hidden) == H_context.shape, \
-            'the shape of H_context should be {} but it is {}'.format((num_examples, question_max_len, 2 * num_hidden),
-                                                                                          H_context.shape)
+        assert (num_examples, question_max_len, 2 * num_hidden) == H_question.shape, \
+            'the shape of H_context should be {} but it is {}'\
+                .format((num_examples, question_max_len, 2 * num_hidden), H_question.shape)
 
         match_lstm_fw_cell = matchLSTMcell(2 * num_hidden, 2 * num_hidden, H_question, question_m)
         match_lstm_bw_cell = matchLSTMcell(2 * num_hidden, 2 * num_hidden, H_question, question_m)
 
-        match_outputs, _, _ = rnn.static_bidirectional_rnn(match_lstm_fw_cell,
+        match_outputs, _, _ = tf.nn.bidirectional_dynamic_rnn(match_lstm_fw_cell,
                                                      match_lstm_bw_cell,
                                                      H_context,
                                                      sequence_length=sequence_length(context_m),
