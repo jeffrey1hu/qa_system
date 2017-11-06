@@ -7,10 +7,10 @@ logging.basicConfig(level=logging.INFO)
 path = '/'.join(os.path.abspath(__file__).split('/')[:-2])
 sys.path += [path + x for x in ['']]
 
-
+from config import Config as cfg
 from utils.read_data import mask_dataset, read_raw_answers, read_answers
 
-data_dir = path + "/data/squad"
+data_dir = cfg.DATA_DIR
 
 def test_mask_dataset():
     logging.info("test_mask_dataset")

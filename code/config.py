@@ -19,3 +19,8 @@ class Config:
     set_names = ['train', 'val']
     # dataset suffixes
     suffixes = ['context', 'question']
+
+    # absolute path of the root directory.
+    ROOT_DIR = os.path.dirname(__file__)
+    # data directory
+    DATA_DIR = pjoin(ROOT_DIR, 'data', 'squad')
