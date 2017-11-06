@@ -77,8 +77,7 @@ class Encoder(object):
         with tf.variable_scope('context_lstm'):
             con_lstm_fw_cell = rnn.BasicLSTMCell(n_hidden, forget_bias=1.0)
             con_lstm_bw_cell = rnn.BasicLSTMCell(n_hidden, forget_bias=1.0)
-            # shape of outputs -> [(Batch_size, l) * P,]
-            # todo make sure the shape of outputs
+            # shape of outputs -> [output_fw, output_bw] -> output_fw -> [batch_size, P, n]
             outputs, _, _ = rnn.static_bidirectional_rnn(con_lstm_fw_cell,
                                                          con_lstm_bw_cell,
                                                          context_embed,
@@ -89,15 +88,13 @@ class Encoder(object):
         # dimension of outputs
         with tf.variable_scope('H_context'):
             # H_context -> (batch_size, P, 2n)
-            H_context = tf.stack(outputs, axis=1)
-            # tf.concat would generate (batch_size, hidden_size * P)
-            # tf.concat
+            H_context = tf.concat(outputs, axis=2)
             H_context = tf.nn.dropout(H_context, keep_prob=keep_prob)
 
         with tf.variable_scope('question_lstm'):
             question_lstm_fw_cell = rnn.BasicLSTMCell(n_hidden, forget_bias=1.0)
             question_lstm_bw_cell = rnn.BasicLSTMCell(n_hidden, forget_bias=1.0)
-            # shape of outpus -> [(Batch_size, l) * Q,]
+            # shape of outputs -> [output_fw, output_bw] -> output_fw -> [batch_size, P, n]
             outputs, _, _ = rnn.static_bidirectional_rnn(question_lstm_fw_cell,
                                                          question_lstm_bw_cell,
                                                          question_embed,
@@ -105,8 +102,8 @@ class Encoder(object):
                                                          dtype=dtype)
 
         with tf.variable_scope('H_question'):
-            # H_question -> (batch_size, Q, l)
-            H_question = tf.stack(outputs, axis=1)
+            # H_question -> (batch_size, Q, 2n)
+            H_question = tf.concat(outputs, axis=2)
             H_question = tf.nn.dropout(H_question, keep_prob=keep_prob)
 
         with tf.variable_scope('H_match_lstm'):
@@ -121,7 +118,7 @@ class Encoder(object):
 
         # H_match -> (batch_size, Q, 2n)
         with tf.variable_scope('H_match'):
-            H_r = tf.stack(outputs, axis=1)
+            H_r = tf.concat(outputs, axis=2)
             H_r = tf.nn.dropout(H_r, keep_prob=keep_prob)
 
         return H_r

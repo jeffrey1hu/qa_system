@@ -66,7 +66,9 @@ def test_model(num_examples, context=None, question=None, embedding=None, answer
 
         logging.info('the shape of context bilstm outputs is a {} length list with {} tensor elements'
                      .format(len(con_outputs), con_outputs[0].get_shape().as_list()))
-        H_context = tf.stack(con_outputs, axis=1)
+
+        H_context = tf.concat(con_outputs, axis=2)
+        logging.info('the shape of h_context is {}'.format(H_context.get_shape().as_list()))
 
     pass
 
