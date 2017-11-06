@@ -21,9 +21,16 @@ def test_mask_dataset():
 
 def test_read_raw_answers():
     logging.info("test_read_raw_answers")
-    raw_answers = read_answers(data_dir)
+    raw_answers = read_raw_answers(data_dir)
     print raw_answers.keys()
     for k, v in raw_answers.iteritems():
+        print k, len(v), v[0]
+
+def test_read_answers():
+    logging.info("test_read_answers")
+    answers = read_answers(data_dir)
+    print answers.keys()
+    for k, v in answers.iteritems():
         print k, len(v), v[0]
 
 if __name__ == '__main__':
