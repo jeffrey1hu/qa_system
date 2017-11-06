@@ -1,5 +1,9 @@
+
+import os
 import sys
-sys.path.append("..")
+path = '/'.join(os.path.abspath(__file__).split('/')[:-2])
+sys.path += [path + x for x in ['']]
+
 
 from utils.read_data import mask_dataset
 
