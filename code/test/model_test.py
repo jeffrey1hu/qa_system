@@ -93,3 +93,7 @@ def main():
     embedding = np.load(embed_path)['glove']
 
     test_model(1,dataset['train_context'][:100], dataset['train_question'][:100], embedding, answer['train_answer'][:100])
+
+
+if __name__ == '__main__':
+    main()
