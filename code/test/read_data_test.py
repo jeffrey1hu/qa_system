@@ -1,6 +1,7 @@
 
 import os
 import sys
+import logging
 path = '/'.join(os.path.abspath(__file__).split('/')[:-2])
 sys.path += [path + x for x in ['']]
 
