@@ -5,7 +5,7 @@ path = '/'.join(os.path.abspath(__file__).split('/')[:-2])
 sys.path += [path + x for x in ['']]
 
 
-from utils.read_data import mask_dataset
+from utils.read_data import mask_dataset, read_raw_answers, read_answers
 
 def test_mask_dataset():
     data_dir = "../data/squad"
