@@ -60,9 +60,25 @@ def test_model(num_examples, context=None, question=None, embedding=None, answer
         con_lstm_bw_cell = rnn.BasicLSTMCell(num_hidden)
         logging.info('hidden stats size of context lstm is {}'.format(con_lstm_fw_cell.state_size))
 
+        con_outputs, con_outputs_states = tf.nn.bidirectional_dynamic_rnn(con_lstm_fw_cell,con_lstm_bw_cell,
+                                                        context_embed,
+                                                        sequence_length=sequence_length(context_m),
+                                                        dtype=tf.float32, scope='con_lstm')
 
 
     pass
+
+
+def sequence_length(sequence_mask):
+    """
+    Args:
+        sequence_mask: Bool tensor with shape -> [batch_size, q]
+
+    Returns:
+        tf.int32, [batch_size]
+
+    """
+    return tf.reduce_sum(tf.cast(sequence_mask, tf.int32), axis=1)
 
 
 def main():
