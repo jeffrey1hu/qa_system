@@ -64,7 +64,9 @@ def test_model(num_examples, context=None, question=None, embedding=None, answer
                                                         sequence_length=sequence_length(context_m),
                                                         dtype=tf.float32, scope='con_lstm')
 
-
+        logging.info('the shape of context bilstm outputs is a {} length list with {} tensor elements'
+                     .format(len(con_outputs), con_outputs[0].get_shape().as_list()))
+        H_context = tf.stack(con_outputs, axis=1)
 
     pass
 
