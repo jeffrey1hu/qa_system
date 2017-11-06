@@ -1,6 +1,11 @@
 """
 read data
 """
+import os
+import sys
+path = '/'.join(os.path.abspath(__file__).split('/')[:-2])
+sys.path += [path + x for x in ['']]
+
 from os.path import join as pjoin
 from config import Config as cfg
 import numpy as np
