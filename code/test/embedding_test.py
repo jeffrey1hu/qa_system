@@ -2,8 +2,14 @@
 
 __author__ = 'innerpeace'
 
+import os
 import sys
-sys.path.append("..")
+import logging
+logging.basicConfig(level=logging.INFO)
+
+path = '/'.join(os.path.abspath(__file__).split('/')[:-2])
+sys.path += [path + x for x in ['']]
+
 from config import Config as cfg
 from train import initialize_vocab
 from os.path import join as pjoin
