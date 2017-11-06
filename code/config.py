@@ -15,6 +15,7 @@ class Config:
     keep_prob = 0.8
     learning_rate = 0.001
     max_grad_norm = 5.0
+    lstm_num_hidden = 100
     # dataset names
     set_names = ['train', 'val']
     # dataset suffixes
