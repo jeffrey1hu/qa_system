@@ -30,7 +30,7 @@ class matchLSTMcell(RNNCell):
 
         with tf.variable_scope(scope):
             # the batch size
-            example_num = inputs.get_shape()[0]
+            example_num = tf.shape(inputs)[0]
             initializer = tf.contrib.layers.xavier_initializer()
             # tf.name_scope()
             w_q = tf.get_variable("W_q", shape=[self.input_size, self.input_size], dtype=dtype, initializer=initializer)
