@@ -57,8 +57,8 @@ def rnn_test():
                                                                          x_m:masks})
             # print('shape of input embeddings is : {}'.format(xin.shape))
             print("shape of output is :{}".format(outp.shape))
-            assert outp.shape == (100, 400, 2 * num_hidden), 'the shape of outp should be {} but it is {}'\
-                .format((100, 400, 2 * num_hidden), outp.shape)
+            assert outp.shape == (2, 400, 2 * num_hidden), 'the shape of outp should be {} but it is {}'\
+                .format((2, 400, 2 * num_hidden), outp.shape)
             print(outp)
 
 def sequence_length(sequence_mask):
