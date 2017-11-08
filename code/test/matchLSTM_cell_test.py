@@ -82,7 +82,7 @@ class matchLSTMcell(RNNCell):
             z = tf.concat([inputs, question_attend], axis=1)
 
             logging.info('In {}, shape of matchlstm z is {}'.format(scope, z.shape))
-            assert tf.shape(z) == [1, 4 * num_hidden], 'ERROR: the shape of z is {}'.format(tf.shape(z))
+            assert z.shape == [1, 4 * num_hidden], 'ERROR: the shape of z is {}'.format(z.shape)
 
             # with GRU instead
             W_r_gru = tf.get_variable("W_r_gru",
