@@ -85,9 +85,10 @@ def main():
             for i in tf.trainable_variables():
                 print(i.name)
             output = sess.run([grad, vars, loss, o, outs, states])
-            for i,x in enumerate(output):
+            names = ['grad', 'vars', 'loss', 'o', 'outs', 'states']
+            for i,x in zip(names, output):
                 print('================')
-                print(x.__name__, x)
+                print(i, x)
 
 
 if __name__ == '__main__':
