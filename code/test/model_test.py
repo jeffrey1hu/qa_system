@@ -153,7 +153,7 @@ def test_model(num_examples, context=None, question=None, embedding=None, answer
             final_loss = tf.reduce_mean(loss_e + loss_s)
 
             train_op = tf.train.AdadeltaOptimizer().minimize(final_loss)
-            outputs = [H_context, H_question, H_r, s_score, e_score, prob_s, answer_s, answer_e,loss_s,loss_e, final_loss]
+            outputs = [H_context, H_question, H_r, s_score, e_score, s_prob, answer_s, answer_e,loss_s,loss_e, final_loss]
             sess.run(tf.global_variables_initializer())
             out = sess.run(outputs, feed_dict={context:context_data, context_m:context_masks,
                                                                   question: question_data, question_m:question_masks,
