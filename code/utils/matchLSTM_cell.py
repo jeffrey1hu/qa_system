@@ -14,7 +14,7 @@ class matchLSTMcell(RNNCell):
         self.input_size = input_size
         self._state_size = state_size
         self.h_question = h_question
-        self.h_question_m = h_question_m
+        self.h_question_m = tf.cast(h_question_m, tf.float32)
 
     @property
     def state_size(self):
@@ -45,7 +45,7 @@ class matchLSTMcell(RNNCell):
             w_q_e = tf.tile(tf.expand_dims(w_q, axis=0), [example_num, 1, 1])
 
             # g -> b * q * 2n
-            g = tf.nn.tanh(tf.matmul(self.h_question, w_q_e),  # shape b * q * 2n
+            g = tf.nn.tanh(tf.matmul(self.h_question, w_q_e)  # shape b * q * 2n
                              + tf.expand_dims(tf.matmul(inputs, w_p) + tf.matmul(state, w_r) + b_p, axis=1)
                              )
 

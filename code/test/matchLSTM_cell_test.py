@@ -20,7 +20,7 @@ class matchLSTMcell(RNNCell):
         self.input_size = input_size
         self._state_size = state_size
         self.h_question = h_question
-        self.h_question_m = h_question_m
+        self.h_question_m = tf.cast(h_question_m, tf.float32)
 
         assert self.input_size == 2 * num_hidden, 'please set input_size of matchLSTMCell again.'
         assert self._state_size == 2 * num_hidden, 'please set state_size of matchLSTMCell again.'
