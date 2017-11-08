@@ -142,7 +142,7 @@ class Decoder(object):
         context_m = tf.cast(context_m, tf.float32)
         # shape -> (b, q, 4n)
         H_r_shape = tf.shape(H_r)
-        print(H_r_shape)
+        print(H_r_shape[0])
         initializer = tf.contrib.layers.xavier_initializer()
 
         with tf.variable_scope("decoder"):
