@@ -23,7 +23,7 @@ question_max_len = cfg.question_max_len
 n_hidden = cfg.n_hidden
 dtype = cfg.dtype
 keep_prob = cfg.keep_prob
-learning_rate = cfg.learning_rate
+learning_rate = cfg.start_lr
 max_grad_norm = cfg.max_grad_norm
 
 
