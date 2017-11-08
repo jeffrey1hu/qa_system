@@ -58,13 +58,14 @@ class matchLSTMcell(RNNCell):
 
             # g -> b * q * 2n
             logging.info("shape 1 {}".format(tf.matmul(self.h_question, w_q_e).get_shape().as_list())) # b, q, 2n
-            logging.info("shape 3 {}".format(tf.matmul(inputs, w_p).get_shape().as_list()))
-            logging.info("shape 4 {}".format(tf.matmul(state, w_r).get_shape().as_list()))
-            logging.info("shape 5 {}".format(b_p.get_shape().as_list()))
-            logging.info("shape 2 {}".format(tf.expand_dims(tf.matmul(inputs, w_p) + tf.matmul(state, w_r) + b_p, axis=1).get_shape().as_list()))
+            logging.info("shape 3 {}".format(tf.matmul(inputs, w_p).get_shape().as_list())) # b, 2n
+            logging.info("shape 4 {}".format(tf.matmul(state, w_r).get_shape().as_list())) # b, 2n
+            logging.info("shape 5 {}".format(b_p.get_shape().as_list()))  # 2n
+            logging.info("shape 2 {}".format(tf.expand_dims(tf.matmul(inputs, w_p) + tf.matmul(state, w_r) + b_p, axis=1).get_shape().as_list())) # b, 1, 2n
 
             g = tf.nn.tanh(tf.matmul(self.h_question, w_q_e),  # shape b * q * 2n
-                             + tf.expand_dims(tf.matmul(inputs, w_p) + tf.matmul(state, w_r) + b_p, axis=1)
+                             + tf.expand_dims(tf.matmul(inputs, w_p) + tf.matmul(state, w_r), axis=1)
+                             + b_p
                              )
 
             w_a_e = tf.tile(tf.expand_dims(w_a, axis=0), [example_num, 1, 1])
