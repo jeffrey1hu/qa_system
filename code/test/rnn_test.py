@@ -3,6 +3,7 @@
 __author__ = 'innerpeace'
 
 import sys
+import logging
 sys.path.append('..')
 from os.path import join as pjoin
 import numpy as np
@@ -49,16 +50,18 @@ def rnn_test():
         lstm_bw_cell = rnn.BasicLSTMCell(num_hidden, forget_bias=1.0)
         outputs, outputs_states = tf.nn.bidirectional_dynamic_rnn(lstm_fw_cell,lstm_bw_cell,
                                                               embed,sequence_length=sequence_length(x_m),dtype=tf.float64)
+        outputs = tf.concat(outputs, axis=2)
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
             outp, outps = sess.run([ outputs, outputs_states], feed_dict={x:inputs,
                                                                          x_m:masks})
             # print('shape of input embeddings is : {}'.format(xin.shape))
-            print("shape of output is :{}".format(np.array(outp).shape))
-            print(outp)
+            print("shape of output is :{}".format(outp.shape))
+            # print(outp)
 
 def sequence_length(sequence_mask):
     return tf.reduce_sum(tf.cast(sequence_mask, tf.int32), axis=1)
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
     rnn_test()
