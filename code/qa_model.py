@@ -78,7 +78,7 @@ class Encoder(object):
             con_lstm_fw_cell = rnn.BasicLSTMCell(n_hidden, forget_bias=1.0)
             con_lstm_bw_cell = rnn.BasicLSTMCell(n_hidden, forget_bias=1.0)
             # shape of outputs -> [output_fw, output_bw] -> output_fw -> [batch_size, P, n]
-            outputs, _, _ = rnn.static_bidirectional_rnn(con_lstm_fw_cell,
+            outputs, _, _ = tf.nn.bidirectional_dynamic_rnn(con_lstm_fw_cell,
                                                          con_lstm_bw_cell,
                                                          context_embed,
                                                          sequence_length=sequence_length(context_m),
@@ -95,7 +95,7 @@ class Encoder(object):
             question_lstm_fw_cell = rnn.BasicLSTMCell(n_hidden, forget_bias=1.0)
             question_lstm_bw_cell = rnn.BasicLSTMCell(n_hidden, forget_bias=1.0)
             # shape of outputs -> [output_fw, output_bw] -> output_fw -> [batch_size, P, n]
-            outputs, _, _ = rnn.static_bidirectional_rnn(question_lstm_fw_cell,
+            outputs, _, _ = tf.nn.bidirectional_dynamic_rnn(question_lstm_fw_cell,
                                                          question_lstm_bw_cell,
                                                          question_embed,
                                                          sequence_length=sequence_length(question_m),
@@ -110,7 +110,7 @@ class Encoder(object):
             match_lstm_fw_cell = matchLSTMcell(2 * n_hidden, self.size, H_question, question_m)
             match_lstm_bw_cell = matchLSTMcell(2 * n_hidden, self.size, H_question, question_m)
 
-            outputs, _, _ = rnn.static_bidirectional_rnn(match_lstm_fw_cell,
+            outputs, _, _ = tf.nn.bidirectional_dynamic_rnn(match_lstm_fw_cell,
                                                          match_lstm_bw_cell,
                                                          H_context,
                                                          sequence_length=sequence_length(context_m),

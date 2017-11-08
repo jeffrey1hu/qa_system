@@ -110,10 +110,10 @@ class matchLSTMcell(RNNCell):
             r_t = tf.nn.sigmoid(tf.matmul(z, U_r_gru) + tf.matmul(state, W_r_gru) + b_r_gru)
 
             h_hat = tf.nn.tanh(tf.matmul(z, U_o_gru) + r_t * tf.matmul(state, W_o_gru) + b_o_gru)
-            new_state = z_t * state + (1 - z_t) * h_hat
+            output = z_t * state + (1 - z_t) * h_hat
 
-            output = new_state
-            return output, new_state
+            new_state = output
+        return output, new_state
 
 
 

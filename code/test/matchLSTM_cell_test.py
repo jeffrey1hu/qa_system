@@ -1,8 +1,19 @@
 
+import sys
+sys.path.append('..')
+import logging
+
 import tensorflow as tf
 from tensorflow.contrib.rnn import RNNCell
+from config import Config as cfg
 
 dtype = tf.float32
+
+question_max_len = cfg.question_max_len
+context_max_len = cfg.context_max_len
+num_hidden = cfg.lstm_num_hidden
+embed_size = cfg.embed_size
+
 
 class matchLSTMcell(RNNCell):
 
@@ -11,6 +22,9 @@ class matchLSTMcell(RNNCell):
         self._state_size = state_size
         self.h_question = h_question
         self.h_question_m = h_question_m
+
+        assert self.input_size == 2 * num_hidden, 'please set input_size of matchLSTMCell again.'
+        assert self._state_size == 2 * num_hidden, 'please set state_size of matchLSTMCell again.'
 
     @property
     def state_size(self):
@@ -21,6 +35,9 @@ class matchLSTMcell(RNNCell):
         return self._state_size
 
     def __call__(self, inputs, state, scope=None):
+
+        print('shape of matchlstm input is {}'.format(inputs.shape))
+        print('shape of matchlstm state is {}'.format(state.shape))
 
         scope = scope or type(self).__name__
 
@@ -53,10 +70,15 @@ class matchLSTMcell(RNNCell):
             # mask out the attention over the padding.
             alpha = alpha * self.h_question_m
 
+            logging.info('shape of matchlstm a is {}'.format(alpha.shape))
+
             # question_attend -> b * 2n
             question_attend = tf.reduce_sum((tf.expand_dims(alpha, [2]) * self.h_question), axis=1)
             # z -> b * 4n
             z = tf.concat([inputs, question_attend], axis=1)
+
+            logging.info('shape of matchlstm z is {}'.format(z.shape))
+            assert tf.shape(z) == [1, 4 * num_hidden], 'ERROR: the shape of z is {}'.format(tf.shape(z))
 
             # with GRU instead
             W_r_gru = tf.get_variable("W_r_gru",
@@ -109,7 +131,7 @@ class matchLSTMcell(RNNCell):
             new_state = z_t * state + (1 - z_t) * h_hat
 
             output = new_state
-            return output, new_state
+        return output, new_state
 
 
 
