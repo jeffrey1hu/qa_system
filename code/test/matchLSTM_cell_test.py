@@ -54,6 +54,7 @@ class matchLSTMcell(RNNCell):
             b_a = tf.get_variable("b_a", shape=[1], dtype=dtype)
 
             # w_q_e -> b * 2n * 2n
+            print [example_num, 1, 1]
             w_q_e = tf.tile(tf.expand_dims(w_q, axis=0), [example_num, 1, 1])
 
             # g -> b * q * 2n
@@ -69,7 +70,6 @@ class matchLSTMcell(RNNCell):
             # mask out the attention over the padding.
             alpha = alpha * self.h_question_m
 
-            print 1
             logging.info('shape of matchlstm a is {}'.format(alpha.shape))
 
             # question_attend -> b * 2n
@@ -129,7 +129,6 @@ class matchLSTMcell(RNNCell):
 
             h_hat = tf.nn.tanh(tf.matmul(z, U_o_gru) + r_t * tf.matmul(state, W_o_gru) + b_o_gru)
             new_state = z_t * state + (1 - z_t) * h_hat
-            print 2
             output = new_state
             #
             # basicLSTM = tf.contrib.rnn.BasicLSTMCell(self._state_size, forget_bias=1.0)
