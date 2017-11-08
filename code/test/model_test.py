@@ -91,7 +91,7 @@ def test_model(num_examples, context=None, question=None, embedding=None, answer
 
         match_lstm_fw_cell = matchLSTMcell(2 * num_hidden, 2 * num_hidden, H_question, question_m)
         match_lstm_bw_cell = matchLSTMcell(2 * num_hidden, 2 * num_hidden, H_question, question_m)
-        logging.info('the shape of match lstm cell is {}'.format(match_lstm_bw_cell.get_shape().as_list()))
+        
         match_outputs, _, _ = tf.nn.bidirectional_dynamic_rnn(match_lstm_fw_cell,
                                                      match_lstm_bw_cell,
                                                      H_context,
