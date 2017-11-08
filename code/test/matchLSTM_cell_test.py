@@ -12,7 +12,6 @@ dtype = tf.float32
 question_max_len = cfg.question_max_len
 context_max_len = cfg.context_max_len
 num_hidden = cfg.lstm_num_hidden
-embed_size = cfg.embed_size
 
 
 class matchLSTMcell(RNNCell):
