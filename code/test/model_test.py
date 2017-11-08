@@ -91,8 +91,8 @@ def test_model(num_examples, context=None, question=None, embedding=None, answer
 
         match_lstm_fw_cell = matchLSTMcell(2 * num_hidden, 2 * num_hidden, H_question, question_m)
         match_lstm_bw_cell = matchLSTMcell(2 * num_hidden, 2 * num_hidden, H_question, question_m)
-        
-        match_outputs, _, _ = tf.nn.bidirectional_dynamic_rnn(match_lstm_fw_cell,
+
+        match_outputs, _ = tf.nn.bidirectional_dynamic_rnn(match_lstm_fw_cell,
                                                      match_lstm_bw_cell,
                                                      H_context,
                                                      sequence_length=sequence_length(context_m),
