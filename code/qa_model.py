@@ -49,9 +49,8 @@ def sequence_length(sequence_mask):
 
 
 class Encoder(object):
-    def __init__(self, size, vocab_dim):
+    def __init__(self, size):
         self.size = size
-        self.vocab_dim = vocab_dim
 
     def encode(self, context, context_m, question, question_m, embedding):
         """
