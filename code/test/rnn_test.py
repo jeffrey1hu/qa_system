@@ -22,7 +22,7 @@ def rnn_test():
     embedding = np.load(embed_path)['glove']
 
     dataset = mask_dataset(data_dir, set_names=set_names, suffixes=suffixes)
-    test_data = dataset['train_context'][:100]
+    test_data = dataset['train_context'][:2]
     inputs = [x[0] for x in test_data]
     masks = [x[1] for x in test_data]
 
@@ -57,7 +57,9 @@ def rnn_test():
                                                                          x_m:masks})
             # print('shape of input embeddings is : {}'.format(xin.shape))
             print("shape of output is :{}".format(outp.shape))
-            # print(outp)
+            assert outp.shape == (100, 400, 2 * num_hidden), 'the shape of outp should be {} but it is {}'\
+                .format((100, 400, 2 * num_hidden), outp.shape)
+            print(outp)
 
 def sequence_length(sequence_mask):
     return tf.reduce_sum(tf.cast(sequence_mask, tf.int32), axis=1)
