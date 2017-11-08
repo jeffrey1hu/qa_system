@@ -140,6 +140,7 @@ class Decoder(object):
                               decided by how you choose to implement the encoder
         :return:
         """
+        context_m = tf.cast(context_m, tf.float32)
         # shape -> (b, q, 4n)
         H_r_shape = H_r.get_shape().as_list()
         initializer = tf.contrib.layers.xavier_initializer()

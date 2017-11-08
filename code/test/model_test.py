@@ -132,7 +132,7 @@ def test_model(num_examples, context=None, question=None, embedding=None, answer
 
             # the prob distribution of start index
             s_prob = tf.nn.softmax(s_score)
-            s_prob = s_prob * context_m
+            s_prob = s_prob * tf.cast(context_m, tf.float32)
             # Hr_attend -> (batch_size, 4n)
             Hr_attend = tf.reduce_sum(H_r * tf.expand_dims(s_prob, axis=2), axis=1)
 
@@ -145,7 +145,7 @@ def test_model(num_examples, context=None, question=None, embedding=None, answer
             logging.info('shape of e_score is {}'.format(e_score.shape))
 
             # e_prob = tf.nn.softmax(e_score)
-            # e_prob = tf.multiply(e_prob, context_m)
+            # e_prob = tf.multiply(e_prob, tf.cast(context_m, tf.float32))
 
             loss_s = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=answer_s, logits=s_score)
             loss_e = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=answer_e, logits=e_score)
