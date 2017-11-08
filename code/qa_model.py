@@ -141,7 +141,8 @@ class Decoder(object):
         """
         context_m = tf.cast(context_m, tf.float32)
         # shape -> (b, q, 4n)
-        H_r_shape = H_r.get_shape().as_list()
+        H_r_shape = tf.shape(H_r)
+        print(H_r_shape)
         initializer = tf.contrib.layers.xavier_initializer()
 
         with tf.variable_scope("decoder"):
@@ -153,7 +154,7 @@ class Decoder(object):
 
             B_r = tf.get_variable("B_r", shape=[n_hidden * 2], dtype=dtype)
             B_f = tf.get_variable("B_f", shape=[], dtype=dtype)
-            print(H_r_shape)
+
             W_r_e = tf.tile(tf.expand_dims(W_r, axis=0), multiples=[H_r_shape[0], 1, 1])
             W_f_e = tf.tile(tf.expand_dims(W_f, axis=0), multiples=[H_r_shape[0], 1, 1])
             W_h_e = tf.tile(tf.expand_dims(W_h, axis=0), multiples=[H_r_shape[0], 1, 1])
