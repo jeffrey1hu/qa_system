@@ -60,6 +60,8 @@ def main():
             for i in xrange(4):
                 pin = tf.slice(inputs, [0, i,0],[-1, 1, -1])
                 m = tf.slice(mask, [0, i],[-1, 1])
+                print "shape of pin {}".format(pin.shape)
+                print "shape of m {}".format(m.shape)
                 out, init_state = tf.nn.dynamic_rnn(cell, pin,
                                                     sequence_length=sequence_length(m),
                                                     initial_state=init_state,
