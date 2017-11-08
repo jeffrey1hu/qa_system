@@ -62,8 +62,9 @@ class matchLSTMcell(RNNCell):
             logging.info("shape 4 {}".format(tf.matmul(state, w_r).get_shape().as_list())) # b, 2n
             logging.info("shape 5 {}".format(b_p.get_shape().as_list()))  # 2n
             logging.info("shape 2 {}".format(tf.expand_dims(tf.matmul(inputs, w_p) + tf.matmul(state, w_r) + b_p, axis=1).get_shape().as_list())) # b, 1, 2n
-            print tf.matmul(self.h_question, w_q_e)
-            print tf.expand_dims(tf.matmul(inputs, w_p) + tf.matmul(state, w_r) + b_p, axis=1)
+            _a =  tf.matmul(self.h_question, w_q_e)
+            _b =  tf.expand_dims(tf.matmul(inputs, w_p) + tf.matmul(state, w_r) + b_p, axis=1)
+            print _a + _b
             g = tf.nn.tanh(tf.matmul(self.h_question, w_q_e),  # shape b * q * 2n
                              + tf.expand_dims(tf.matmul(inputs, w_p) + tf.matmul(state, w_r) + b_p, axis=1)
                              )
