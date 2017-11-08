@@ -87,7 +87,7 @@ def main():
             output = sess.run([grad, vars, loss, o, outs, states])
             for i,x in enumerate(output):
                 print('================')
-                print(x)
+                print(x.__name__, x)
 
 
 if __name__ == '__main__':
