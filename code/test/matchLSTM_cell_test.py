@@ -57,6 +57,12 @@ class matchLSTMcell(RNNCell):
             w_q_e = tf.tile(tf.expand_dims(w_q, axis=0), [example_num, 1, 1])
 
             # g -> b * q * 2n
+            logging.info("shape 1 {}".format(tf.shape(tf.matmul(self.h_question, w_q_e))))
+            logging.info("shape 3 {}".format(tf.shape(tf.matmul(inputs, w_p))))
+            logging.info("shape 4 {}".format(tf.shape(tf.matmul(state, w_r))))
+            logging.info("shape 5 {}".format(tf.shape(b_p)))
+            logging.info("shape 2 {}".format(tf.shape(tf.expand_dims(tf.matmul(inputs, w_p) + tf.matmul(state, w_r) + b_p, axis=1))))
+
             g = tf.nn.tanh(tf.matmul(self.h_question, w_q_e),  # shape b * q * 2n
                              + tf.expand_dims(tf.matmul(inputs, w_p) + tf.matmul(state, w_r) + b_p, axis=1)
                              )
@@ -69,14 +75,14 @@ class matchLSTMcell(RNNCell):
             # mask out the attention over the padding.
             alpha = alpha * self.h_question_m
 
-            logging.info('shape of matchlstm a is {}'.format(alpha.shape))
+            logging.info('In {}, shape of matchlstm a is {}'.format(scope, alpha.shape))
 
             # question_attend -> b * 2n
             question_attend = tf.reduce_sum((tf.expand_dims(alpha, [2]) * self.h_question), axis=1)
             # z -> b * 4n
             z = tf.concat([inputs, question_attend], axis=1)
 
-            logging.info('shape of matchlstm z is {}'.format(z.shape))
+            logging.info('In {}, shape of matchlstm z is {}'.format(scope, z.shape))
             assert tf.shape(z) == [1, 4 * num_hidden], 'ERROR: the shape of z is {}'.format(tf.shape(z))
 
             # with GRU instead
