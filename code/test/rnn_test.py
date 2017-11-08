@@ -11,8 +11,7 @@ from config import Config as cfg
 from utils.read_data import mask_dataset
 import tensorflow.contrib.rnn as rnn
 
-root_dir = cfg.root_dir
-data_dir = cfg.data_dir
+data_dir = cfg.DATA_DIR
 set_names = cfg.set_names
 suffixes = cfg.suffixes
 
