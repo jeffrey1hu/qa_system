@@ -197,7 +197,7 @@ def main():
     embed_path = pjoin(data_dir, "glove.trimmed.100.npz")
     embedding = np.load(embed_path)['glove']
 
-    test_model(1,dataset['train_context'][:100], dataset['train_question'][:100], embedding, answer['train_answer'][:100])
+    test_model(100,dataset['train_context'][:100], dataset['train_question'][:100], embedding, answer['train_answer'][:100])
 
 
 if __name__ == '__main__':
