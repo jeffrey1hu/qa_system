@@ -14,6 +14,8 @@ import tensorflow as tf
 import tensorflow.contrib.rnn as rnn
 from tensorflow.python.ops import variable_scope as vs
 
+from tqdm import tqdm
+
 from evaluate import exact_match_score, f1_score
 from utils.matchLSTM_cell import matchLSTMcell
 from config import Config as cfg
@@ -233,30 +235,32 @@ class QASystem(object):
         self.answer_s = tf.placeholder(tf.int32, shape=(None,))
         self.answer_e = tf.placeholder(tf.int32, shape=(None,))
 
-        self.lr = tf.placeholder(tf.float32)
-
-
         # ==== assemble pieces ====
         with tf.variable_scope("qa", initializer=tf.uniform_unit_scaling_initializer(1.0)):
             self.setup_embeddings()
             self.setup_system()
             self.setup_loss()
 
-        # ==== set up training/updating procedure ====
-        tf.summary.scalar('learning_rate', start_lr)
+            # ==== set up training/updating procedure ====
 
-        self.optimizer = tf.train.AdamOptimizer(self.lr)
-        grad_var = self.optimizer.compute_gradients(self.final_loss)
-        grad = [i[0] for i in grad_var]
-        var = [i[1] for i in grad_var]
-        self.grad_norm = tf.global_norm(grad)
-        tf.summary.scalar('grad_norm', self.grad_norm)
-        grad, use_norm = tf.clip_by_global_norm(grad, max_grad_norm)
+            self.global_step = tf.Variable(0, trainable=False)
+            self.starter_learning_rate = tf.placeholder(tf.float32, name='start_lr')
+            learning_rate = tf.train.exponential_decay(self.starter_learning_rate, self.global_step,
+                                                       1000, 0.96, staircase=True)
+            tf.summary.scalar('learning_rate', learning_rate)
+            self.optimizer = tf.train.AdamOptimizer(learning_rate)
 
-        self.train_op = self.optimizer.apply_gradients(zip(grad, var))
+            grad_var = self.optimizer.compute_gradients(self.final_loss)
+            grad = [i[0] for i in grad_var]
+            var = [i[1] for i in grad_var]
+            self.grad_norm = tf.global_norm(grad)
+            tf.summary.scalar('grad_norm', self.grad_norm)
+            grad, use_norm = tf.clip_by_global_norm(grad, max_grad_norm)
 
-        self.saver = tf.train.Saver()
-        self.merged = tf.summary.merge_all()
+            self.train_op = self.optimizer.apply_gradients(zip(grad, var), global_step=self.global_step)
+
+            self.saver = tf.train.Saver()
+            self.merged = tf.summary.merge_all()
 
     def setup_system(self):
         """
@@ -304,7 +308,7 @@ class QASystem(object):
         input_feed[self.question_m] = question[:, 1, :]
         input_feed[self.answer_s] = answer[:, 0]
         input_feed[self.answer_e] = answer[:, 1]
-        input_feed[self.lr] = lr
+        input_feed[self.starter_learning_rate] = lr
 
         output_feed = [self.merged, self.train_op, self.final_loss, self.grad_norm]
 
@@ -329,26 +333,27 @@ class QASystem(object):
 
         return outputs
 
-    def decode(self, session, test_x):
+    def decode(self, session, context, question):
         """
         Returns the probability distribution over different positions in the paragraph
         so that other methods like self.answer() will be able to work properly
         :return:
         """
         input_feed = {}
+        input_feed[self.context] = context[:, 0, :]
+        input_feed[self.context_m] = context[:, 1, :]
+        input_feed[self.question] = question[:, 0, :]
+        input_feed[self.question_m] = question[:, 1, :]
 
-        # fill in this feed_dictionary like:
-        # input_feed['test_x'] = test_x
+        output_feed = [self.s_score, self.e_score]
 
-        output_feed = []
+        s_score, e_score = session.run(output_feed, input_feed)
 
-        outputs = session.run(output_feed, input_feed)
+        return s_score, e_score
 
-        return outputs
+    def answer(self, session, context, question):
 
-    def answer(self, session, test_x):
-
-        yp, yp2 = self.decode(session, test_x)
+        yp, yp2 = self.decode(session, context, question)
 
         a_s = np.argmax(yp, axis=1)
         a_e = np.argmax(yp2, axis=1)
@@ -375,7 +380,7 @@ class QASystem(object):
 
         return valid_cost
 
-    def evaluate_answer(self, session, dataset, sample=100, log=False):
+    def evaluate_answer(self, session, dataset, raw_answers, rev_vocab, sample=100, log=False, training=False):
         """
         Evaluate the model's performance using the harmonic mean of F1 and Exact Match (EM)
         with the set of true answer labels
@@ -390,16 +395,83 @@ class QASystem(object):
         :param log: whether we print to std out stream
         :return:
         """
+        if not isinstance(rev_vocab, np.ndarray):
+            rev_vocab = np.array(rev_vocab)
+
+        tf1 = 0.
+        tem = 0.
+
+        input_batch_size = 100
+
+        if training:
+            samples = np.random.choice(range(len(dataset['train_context'])), sample)
+
+            train_context = np.array(dataset['train_context'])[samples, :, :]
+            train_question = np.array(dataset['train_question'])[samples, :, :]
+            train_answer = np.array(raw_answers['raw_train_answer'])[samples]
+            train_len = len(train_context)
+
+            train_a_e = np.array([], dtype=np.int32)
+            train_a_s = np.array([], dtype=np.int32)
+
+            for i in tqdm(range(sample // input_batch_size), desc='trianing set'):
+                train_as, train_ae = self.answer(session,
+                                                 train_context[i * input_batch_size:(i + 1) * input_batch_size],
+                                                 train_question[i * input_batch_size:(i + 1) * input_batch_size])
+
+                train_a_e = np.concatenate((train_a_e, train_ae), axis=0)
+                train_a_s = np.concatenate((train_a_s, train_as), axis=0)
+
+            # a_s and a_e -> (sample_num)
+            for i, sample_idx in enumerate(samples):
+                prediction_ids = train_context[sample_idx, 0, train_a_s[i]:train_a_e[i]]
+                prediction_answer = ' '.join(rev_vocab[prediction_ids])
+                raw_answer = train_answer[sample_idx]
+                tf1 += f1_score(prediction_answer, raw_answer)
+                tem += exact_match_score(prediction_answer, raw_answer)
+
+            if log:
+                logging.info("Training set ==> F1: {}, EM: {}, for {} samples".
+                             format(tf1 / train_len, tem / train_len, train_len))
 
         f1 = 0.
         em = 0.
+        samples = np.random.choice(range(len(dataset['val_context'])), sample)
+
+        val_context = np.array(dataset['val_context'])[samples, :, :]
+        val_question = np.array(dataset['val_question'])[samples, :, :]
+        val_answer = np.array(raw_answers['raw_val_answer'])[samples]
+        val_len = len(val_answer)
+
+        val_a_e = np.array([], dtype=np.int32)
+        val_a_s = np.array([], dtype=np.int32)
+
+        for i in tqdm(range(sample // input_batch_size), desc='val set'):
+            val_as, val_ae = self.answer(session,
+                                             val_context[i * input_batch_size:(i + 1) * input_batch_size],
+                                             val_question[i * input_batch_size:(i + 1) * input_batch_size])
+
+            val_a_e = np.concatenate((val_a_e, val_ae), axis=0)
+            val_a_s = np.concatenate((val_a_s, val_as), axis=0)
+
+        # a_s and a_e -> (sample_num)
+        for i, sample_idx in enumerate(samples):
+            prediction_ids = val_context[sample_idx, 0, val_a_s[i]:val_a_e[i]]
+            prediction_answer = ' '.join(rev_vocab[prediction_ids])
+            raw_answer = val_answer[sample_idx]
+            f1 += f1_score(prediction_answer, raw_answer)
+            em += exact_match_score(prediction_answer, raw_answer)
 
         if log:
-            logging.info("F1: {}, EM: {}, for {} samples".format(f1, em, sample))
+            logging.info("val set ==> F1: {}, EM: {}, for {} samples".
+                         format(f1 / val_len, em / val_len, val_len))
 
-        return f1, em
+        if training:
+            return tf1/sample, tem/sample, f1/sample, em/sample
+        else:
+            return f1/sample, em/sample
 
-    def train(self, session, dataset, answers, train_dir, debug_num=None):
+    def train(self, session, dataset, answers, train_dir, raw_answers, rev_vocab, debug_num=None):
         """
         Implement main training loop
 
@@ -506,23 +578,23 @@ class QASystem(object):
                     toc = time.time()
                     logging.info('iters: {}/{} loss: {} norm: {}. time: {} secs'.format(
                         self.iters, total_iterations, loss, grad_norm, toc - tic))
-                    # tf1, tem, f1, em = self.evaluate_answer(session, dataset, raw_answers, rev_vocab,
-                    #                                         training=True, log=True, sample=cfg.sample)
-                    # self.train_evals.append((tf1, tem))
-                    # self.val_evals.append((f1, em))
+                    tf1, tem, f1, em = self.evaluate_answer(session, dataset, raw_answers, rev_vocab,
+                                                            training=True, log=True, sample=cfg.sample)
+                    self.train_evals.append((tf1, tem))
+                    self.val_evals.append((f1, em))
                     tic = time.time()
 
                 if self.iters % cfg.save_every == 0:
                     self.saver.save(session, save_path, global_step=self.iters)
-                    # self.evaluate_answer(session, dataset, raw_answers, rev_vocab,
-                    #                      training=True, log=True, sample=4000)
+                    self.evaluate_answer(session, dataset, raw_answers, rev_vocab,
+                                         training=True, log=True, sample=4000)
             if cfg.save_every_epoch:
                 self.saver.save(session, save_path, global_step=self.iters)
 
             logging.info('average loss of epoch {}/{} is {}'.format(ep + 1, self.epochs, ep_loss / batch_num))
 
             data_dict = {'losses': self.losses, 'norms': self.norms,
-                         'train_eval': [], 'val_eval': []}
+                         'train_eval': self.train_evals, 'val_eval': self.val_evals}
             c_time = time.strftime('%Y%m%d_%H%M', time.localtime())
             data_save_path = pjoin('cache', str(self.iters) + 'iters' + c_time + '.npz')
             np.savez(data_save_path, data_dict)

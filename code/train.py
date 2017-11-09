@@ -117,9 +117,13 @@ def main(_):
 
         save_train_dir = get_normalized_train_dir(cfg.train_dir)
 
-        qa.train(sess, dataset, answers, save_train_dir, debug_num=5000)
+        qa.train(sess, dataset, answers, save_train_dir, raw_answers, rev_vocab,
+                 debug_num=1000
+                 )
         #
-        # qa.evaluate_answer(sess, dataset, vocab, FLAGS.evaluate, log=True)
-
+        qa.evaluate_answer(sess, dataset, raw_answers, rev_vocab,
+                           log=True,
+                           training=True,
+                           sample=4000)
 if __name__ == "__main__":
     tf.app.run()
