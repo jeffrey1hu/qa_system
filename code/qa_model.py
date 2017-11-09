@@ -27,7 +27,7 @@ question_max_len = cfg.question_max_len
 n_hidden = cfg.n_hidden
 dtype = cfg.dtype
 keep_prob = cfg.keep_prob
-learning_rate = cfg.start_lr
+start_lr = cfg.start_lr
 max_grad_norm = cfg.max_grad_norm
 
 
@@ -243,7 +243,7 @@ class QASystem(object):
             self.setup_loss()
 
         # ==== set up training/updating procedure ====
-        tf.summary.scalar('learning_rate', learning_rate)
+        tf.summary.scalar('learning_rate', start_lr)
 
         self.optimizer = tf.train.AdamOptimizer(self.lr)
         grad_var = self.optimizer.compute_gradients(self.final_loss)
@@ -306,8 +306,6 @@ class QASystem(object):
         input_feed[self.answer_e] = answer[:, 1]
         input_feed[self.lr] = lr
 
-        print("final_loss", self.final_loss)
-        print(self.merged, self.train_op, self.final_loss, self.grad_norm)
         output_feed = [self.merged, self.train_op, self.final_loss, self.grad_norm]
 
         outputs = session.run(output_feed, input_feed)
@@ -467,7 +465,7 @@ class QASystem(object):
         self.iters = 0
         save_path = pjoin(train_dir, 'weights')
 
-        self.train_writer = tf.summary.FileWriter(cfg.summary_dir + str(learning_rate),
+        self.train_writer = tf.summary.FileWriter(cfg.summary_dir + str(start_lr),
                                                   session.graph)
 
         batch_size = cfg.batch_size
@@ -494,7 +492,7 @@ class QASystem(object):
                 question = train_question[it * batch_size: (it + 1) * batch_size]
                 answer = train_answer[it * batch_size: (it + 1) * batch_size]
 
-                outputs = self.optimize(session, context, question, answer, learning_rate)
+                outputs = self.optimize(session, context, question, answer, start_lr)
 
                 self.train_writer.add_summary(outputs[0], self.iters)
                 loss, grad_norm = outputs[2:]
