@@ -97,8 +97,6 @@ def main(_):
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
 
-    tf.reset_default_graph()
-
     encoder = Encoder(size=2 * num_hidden)
     decoder = Decoder(output_size=2 * num_hidden)
 
