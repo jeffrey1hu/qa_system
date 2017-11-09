@@ -91,12 +91,18 @@ def main(_):
     file_handler = logging.FileHandler(pjoin(cfg.log_dir, 'log' + c_time + '.txt'))
     logging.getLogger().addHandler(file_handler)
 
+    print_parameters()
+
+    # gpu setting
+    config = tf.ConfigProto()
+    config.gpu_options.allow_growth = True
+
     encoder = Encoder(size=2 * num_hidden)
     decoder = Decoder(output_size=2 * num_hidden)
 
     qa = QASystem(encoder, decoder, embed_path)
 
-    with tf.Session() as sess:
+    with tf.Session(config=config) as sess:
 
         load_train_dir = get_normalized_train_dir(cfg.train_dir)
 
@@ -111,7 +117,7 @@ def main(_):
 
         save_train_dir = get_normalized_train_dir(cfg.train_dir)
 
-        # qa.train(sess, dataset, answers, save_train_dir)
+        qa.train(sess, dataset, answers, save_train_dir, debug_num=5000)
         #
         # qa.evaluate_answer(sess, dataset, vocab, FLAGS.evaluate, log=True)
 
