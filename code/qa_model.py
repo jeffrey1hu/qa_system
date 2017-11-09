@@ -280,6 +280,7 @@ class QASystem(object):
         input_feed[self.answer_e] = answer[:, 1]
         input_feed[self.lr] = lr
 
+        print(self.merged, self.train_op, self.final_loss, self.use_norm)
         output_feed = [self.merged, self.train_op, self.final_loss, self.use_norm]
 
         outputs = session.run(output_feed, input_feed)
