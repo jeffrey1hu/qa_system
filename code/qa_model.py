@@ -26,7 +26,7 @@ logging.basicConfig(level=logging.INFO)
 
 context_max_len = cfg.context_max_len
 question_max_len = cfg.question_max_len
-n_hidden = cfg.n_hidden
+n_hidden = cfg.lstm_num_hidden
 dtype = cfg.dtype
 keep_prob = cfg.keep_prob
 start_lr = cfg.start_lr

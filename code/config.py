@@ -15,7 +15,7 @@ class Config:
     embed_size = 100
     batch_size = 64
     start_lr = 5e-4
-    n_hidden = 100
+
     dtype = tf.float32
     keep_prob = 0.8
     max_grad_norm = 5.0
