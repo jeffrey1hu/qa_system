@@ -31,7 +31,7 @@ dtype = cfg.dtype
 keep_prob = cfg.keep_prob
 start_lr = cfg.start_lr
 max_grad_norm = cfg.max_grad_norm
-
+regularizer = tf.contrib.layers.l2_regularizer(cfg.reg)
 
 def variable_summaries(var):
     """Attach a lot of summaries to a Tensor (for TensorBoard visualization)."""
@@ -169,11 +169,14 @@ class Decoder(object):
         initializer = tf.contrib.layers.xavier_initializer()
 
         with tf.variable_scope("decoder"):
-            W_r = tf.get_variable("V_r", shape=[n_hidden * 4, n_hidden * 2], dtype=dtype, initializer=initializer)
+            W_r = tf.get_variable("V_r", shape=[n_hidden * 4, n_hidden * 2],
+                                  dtype=dtype, initializer=initializer, regularizer=regularizer)
 
-            W_f = tf.get_variable("W_f", shape=[n_hidden * 2, 1], dtype=dtype, initializer=initializer)
+            W_f = tf.get_variable("W_f", shape=[n_hidden * 2, 1],
+                                  dtype=dtype, initializer=initializer, regularizer=regularizer)
 
-            W_h = tf.get_variable("W_h", shape=[n_hidden * 4, n_hidden * 2], dtype=dtype, initializer=initializer)
+            W_h = tf.get_variable("W_h", shape=[n_hidden * 4, n_hidden * 2],
+                                  dtype=dtype, initializer=initializer, regularizer=regularizer)
 
             B_r = tf.get_variable("B_r", shape=[n_hidden * 2], dtype=dtype)
             B_f = tf.get_variable("B_f", shape=[], dtype=dtype)
@@ -283,7 +286,10 @@ class QASystem(object):
             loss_s = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.answer_s, logits=self.s_score)
             loss_e = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.answer_e, logits=self.e_score)
 
-        self.final_loss = tf.reduce_mean(loss_e + loss_s)
+            reg_variables = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
+            reg_term = tf.contrib.layers.apply_regularization(regularizer, reg_variables)
+
+        self.final_loss = tf.reduce_mean(loss_e + loss_s) + reg_term
         tf.summary.scalar('final_loss', self.final_loss)
 
     def setup_embeddings(self):

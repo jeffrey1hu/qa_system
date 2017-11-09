@@ -16,6 +16,8 @@ class Config:
     batch_size = 64
     start_lr = 5e-4
 
+    reg = 0.001
+
     dtype = tf.float32
     keep_prob = 0.8
     max_grad_norm = 5.0
