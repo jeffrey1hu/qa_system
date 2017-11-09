@@ -1,6 +1,6 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+# from __future__ import absolute_import
+# from __future__ import division
+# from __future__ import print_function
 
 import sys
 import time
@@ -225,8 +225,8 @@ class QASystem(object):
         grad_var = self.optimizer.compute_gradients(self.final_loss)
         grad = [i[0] for i in grad_var]
         var = [i[1] for i in grad_var]
-
-        grad, self.use_norm = tf.clip_by_global_norm(grad, max_grad_norm)
+        self.grad_norm = tf.global_norm(grad)
+        grad, use_norm = tf.clip_by_global_norm(grad, max_grad_norm)
 
         self.train_op = self.optimizer.apply_gradients(zip(grad, var))
 
@@ -280,8 +280,9 @@ class QASystem(object):
         input_feed[self.answer_e] = answer[:, 1]
         input_feed[self.lr] = lr
 
-        print(self.merged, self.train_op, self.final_loss, self.use_norm)
-        output_feed = [self.merged, self.train_op, self.final_loss, self.use_norm]
+        print("final_loss", self.final_loss)
+        print(self.merged, self.train_op, self.final_loss, self.grad_norm)
+        output_feed = [self.merged, self.train_op, self.final_loss, self.grad_norm]
 
         outputs = session.run(output_feed, input_feed)
 
