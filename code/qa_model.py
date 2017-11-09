@@ -31,6 +31,20 @@ learning_rate = cfg.start_lr
 max_grad_norm = cfg.max_grad_norm
 
 
+def variable_summaries(var):
+    """Attach a lot of summaries to a Tensor (for TensorBoard visualization)."""
+
+    with tf.name_scope('summaries'):
+        mean = tf.reduce_mean(var)
+        tf.summary.scalar('mean', mean)
+        with tf.name_scope('stddev'):
+            stddev = tf.sqrt(tf.reduce_mean(tf.square(var - mean)))
+        tf.summary.scalar('stddev', stddev)
+        tf.summary.scalar('max', tf.reduce_max(var))
+        tf.summary.scalar('min', tf.reduce_min(var))
+        tf.summary.histogram('histogram', var)
+
+
 def get_optimizer(opt):
     if opt == "adam":
         optfn = tf.train.AdamOptimizer
@@ -93,6 +107,7 @@ class Encoder(object):
             # H_context -> (batch_size, P, 2n)
             H_context = tf.concat(outputs, axis=2)
             H_context = tf.nn.dropout(H_context, keep_prob=keep_prob)
+            variable_summaries(H_context)
 
         with tf.variable_scope('question_lstm'):
             question_lstm_fw_cell = rnn.BasicLSTMCell(n_hidden, forget_bias=1.0)
@@ -108,6 +123,8 @@ class Encoder(object):
             # H_question -> (batch_size, Q, 2n)
             H_question = tf.concat(outputs, axis=2)
             H_question = tf.nn.dropout(H_question, keep_prob=keep_prob)
+            variable_summaries(H_question)
+
 
         with tf.variable_scope('H_match_lstm'):
             match_lstm_fw_cell = matchLSTMcell(2 * n_hidden, self.size, H_question, question_m)
@@ -123,6 +140,7 @@ class Encoder(object):
         with tf.variable_scope('H_match'):
             H_r = tf.concat(outputs, axis=2)
             H_r = tf.nn.dropout(H_r, keep_prob=keep_prob)
+            variable_summaries(H_r)
 
         return H_r
 
@@ -168,10 +186,12 @@ class Decoder(object):
             s_score = tf.matmul(f1, W_f_e) + B_f
             # s_score -> (b, q)
             s_score = tf.squeeze(s_score, axis=2)
+            variable_summaries(s_score)
 
             # the prob distribution of start index
             s_prob = tf.nn.softmax(s_score)
             s_prob = s_prob * context_m
+            variable_summaries(s_prob)
             # Hr_attend -> (batch_size, 4n)
             Hr_attend = tf.reduce_sum(H_r * tf.expand_dims(s_prob, axis=2), axis=1)
 
@@ -181,9 +201,11 @@ class Decoder(object):
 
             e_score = tf.matmul(f2, W_f_e) + B_f
             e_score = tf.squeeze(e_score, axis=2)
+            variable_summaries(e_score)
 
             e_prob = tf.nn.softmax(e_score)
             e_prob = tf.multiply(e_prob, context_m)
+            variable_summaries(e_prob)
 
         return s_score, e_score
 
@@ -221,11 +243,14 @@ class QASystem(object):
             self.setup_loss()
 
         # ==== set up training/updating procedure ====
+        tf.summary.scalar('learning_rate', learning_rate)
+
         self.optimizer = tf.train.AdamOptimizer(self.lr)
         grad_var = self.optimizer.compute_gradients(self.final_loss)
         grad = [i[0] for i in grad_var]
         var = [i[1] for i in grad_var]
         self.grad_norm = tf.global_norm(grad)
+        tf.summary.scalar('grad_norm', self.grad_norm)
         grad, use_norm = tf.clip_by_global_norm(grad, max_grad_norm)
 
         self.train_op = self.optimizer.apply_gradients(zip(grad, var))
@@ -255,6 +280,7 @@ class QASystem(object):
             loss_e = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.answer_e, logits=self.e_score)
 
         self.final_loss = tf.reduce_mean(loss_e + loss_s)
+        tf.summary.scalar('final_loss', self.final_loss)
 
     def setup_embeddings(self):
         """
