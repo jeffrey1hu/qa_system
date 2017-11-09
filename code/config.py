@@ -11,15 +11,15 @@ class Config:
     # maximum length of question
     question_max_len = 30
 
-    epochs = 3
+    epochs = 5
     embed_size = 100
-    batch_size = 32
+    batch_size = 64
     start_lr = 5e-4
     n_hidden = 100
     dtype = tf.float32
     keep_prob = 0.8
     max_grad_norm = 5.0
-    lstm_num_hidden = 100
+    lstm_num_hidden = 64
     # dataset names
     set_names = ['train', 'val']
     # dataset suffixes
