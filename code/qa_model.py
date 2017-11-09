@@ -423,10 +423,10 @@ class QASystem(object):
                 train_a_s = np.concatenate((train_a_s, train_as), axis=0)
 
             # a_s and a_e -> (sample_num)
-            for i, sample_idx in enumerate(samples):
-                prediction_ids = train_context[sample_idx, 0, train_a_s[i]:train_a_e[i]]
+            for i in range(len(samples)):
+                prediction_ids = train_context[i, 0, train_a_s[i]:train_a_e[i]+1]
                 prediction_answer = ' '.join(rev_vocab[prediction_ids])
-                raw_answer = train_answer[sample_idx]
+                raw_answer = train_answer[i]
                 tf1 += f1_score(prediction_answer, raw_answer)
                 tem += exact_match_score(prediction_answer, raw_answer)
 
@@ -455,10 +455,10 @@ class QASystem(object):
             val_a_s = np.concatenate((val_a_s, val_as), axis=0)
 
         # a_s and a_e -> (sample_num)
-        for i, sample_idx in enumerate(samples):
-            prediction_ids = val_context[sample_idx, 0, val_a_s[i]:val_a_e[i]]
+        for i in range(len(samples)):
+            prediction_ids = val_context[i, 0, val_a_s[i]:val_a_e[i]]
             prediction_answer = ' '.join(rev_vocab[prediction_ids])
-            raw_answer = val_answer[sample_idx]
+            raw_answer = val_answer[i]
             f1 += f1_score(prediction_answer, raw_answer)
             em += exact_match_score(prediction_answer, raw_answer)
 
