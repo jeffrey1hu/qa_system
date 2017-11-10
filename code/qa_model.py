@@ -33,9 +33,9 @@ n_hidden = cfg.lstm_num_hidden
 dtype = cfg.dtype
 keep_prob = cfg.keep_prob
 start_lr = cfg.start_lr
-max_grad_norm = cfg.max_grad_norm
+# max_grad_norm = cfg.max_grad_norm
 regularizer = tf.contrib.layers.l2_regularizer(cfg.reg)
-
+clip_by_val = cfg.clip_by_val
 
 def smooth(a, beta=0.8):
     '''smooth the curve'''
@@ -270,14 +270,21 @@ class QASystem(object):
             tf.summary.scalar('learning_rate', learning_rate)
             self.optimizer = tf.train.AdamOptimizer(learning_rate)
 
-            grad_var = self.optimizer.compute_gradients(self.final_loss)
-            grad = [i[0] for i in grad_var]
-            var = [i[1] for i in grad_var]
+            # grad_var = self.optimizer.compute_gradients(self.final_loss)
+            # grad = [i[0] for i in grad_var]
+            # var = [i[1] for i in grad_var]
+            # self.grad_norm = tf.global_norm(grad)
+            # tf.summary.scalar('grad_norm', self.grad_norm)
+            # grad, use_norm = tf.clip_by_global_norm(grad, max_grad_norm)
+            #
+            # self.train_op = self.optimizer.apply_gradients(zip(grad, var), global_step=self.global_step)
+
+            gradients = self.optimizer.compute_gradients(self.final_loss)
+            capped_gvs = [(tf.clip_by_value(grad, -clip_by_val, clip_by_val), var) for grad, var in gradients]
+            grad = [x[0] for x in gradients]
             self.grad_norm = tf.global_norm(grad)
             tf.summary.scalar('grad_norm', self.grad_norm)
-            grad, use_norm = tf.clip_by_global_norm(grad, max_grad_norm)
-
-            self.train_op = self.optimizer.apply_gradients(zip(grad, var), global_step=self.global_step)
+            self.train_op = self.optimizer.apply_gradients(capped_gvs, global_step=self.global_step)
 
             self.saver = tf.train.Saver()
             self.merged = tf.summary.merge_all()

@@ -20,7 +20,10 @@ class Config:
 
     dtype = tf.float32
     keep_prob = 1.0
-    max_grad_norm = 5.0
+
+    # max_grad_norm = 5.0
+    clip_by_val = 5.0
+
     lstm_num_hidden = 64
     # dataset names
     set_names = ['train', 'val']
