@@ -14,7 +14,7 @@ class Config:
     epochs = 10
     embed_size = 100
     batch_size = 128
-    start_lr = 5e-3
+    start_lr = 1e-3
 
     reg = 0.001
 

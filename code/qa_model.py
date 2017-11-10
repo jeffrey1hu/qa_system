@@ -614,8 +614,8 @@ class QASystem(object):
                                          training=False, log=True, sample=4000)
             if cfg.save_every_epoch:
                 self.saver.save(session, save_path, global_step=self.iters)
-                self.evaluate_answer(session, dataset, raw_answers, rev_vocab,
-                                     training=False, log=True, sample=4000)
+                # self.evaluate_answer(session, dataset, raw_answers, rev_vocab,
+                #                      training=False, log=True, sample=4000)
             logging.info('average loss of epoch {}/{} is {}'.format(ep + 1, self.epochs, ep_loss / batch_num))
 
             data_dict = {'losses': self.losses, 'norms': self.norms,
