@@ -22,7 +22,7 @@ class Config:
     keep_prob = 1.0
 
     # max_grad_norm = 5.0
-    clip_by_val = 5.0
+    clip_by_val = 10.0
 
     lstm_num_hidden = 64
     # dataset names

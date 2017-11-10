@@ -216,10 +216,12 @@ class Decoder(object):
             # Hr_attend -> (batch_size, 4n)
             Hr_attend = tf.reduce_sum(H_r * tf.expand_dims(s_prob, axis=2), axis=1)
 
+            # f2 = tf.nn.tanh(tf.matmul(H_r, W_r_e)
+            #                 + tf.matmul(tf.tile(tf.expand_dims(Hr_attend, axis=1), multiples=[1, H_r_shape[1], 1]), W_h_e)
+            #                 + B_r)
             f2 = tf.nn.tanh(tf.matmul(H_r, W_r_e)
-                            + tf.matmul(tf.tile(tf.expand_dims(Hr_attend, axis=1), multiples=[1, H_r_shape[1], 1]), W_h_e)
+                            + tf.expand_dims(tf.matmul(Hr_attend, W_h), axis=1)
                             + B_r)
-
             with tf.name_scope('end_score'):
                 e_score = tf.matmul(f2, W_f_e) + B_f
                 e_score = tf.squeeze(e_score, axis=2)
