@@ -11,15 +11,15 @@ class Config:
     # maximum length of question
     question_max_len = 30
 
-    epochs = 10
+    epochs = 5
     embed_size = 100
-    batch_size = 128
-    start_lr = 1e-3
+    batch_size = 32
+    start_lr = 5e-4
 
     reg = 0.001
 
     dtype = tf.float32
-    keep_prob = 0.8
+    keep_prob = 1.0
     max_grad_norm = 5.0
     lstm_num_hidden = 64
     # dataset names
