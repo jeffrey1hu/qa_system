@@ -191,8 +191,8 @@ class Decoder(object):
             W_h = tf.get_variable("W_h", shape=[n_hidden * 4, n_hidden * 2],
                                   dtype=dtype, initializer=initializer, regularizer=regularizer)
 
-            B_r = tf.get_variable("B_r", shape=[n_hidden * 2], dtype=dtype)
-            B_f = tf.get_variable("B_f", shape=[], dtype=dtype)
+            B_r = tf.get_variable("B_r", shape=[n_hidden * 2], dtype=dtype, initializer=tf.zeros_initializer())
+            B_f = tf.get_variable("B_f", shape=[], dtype=dtype, initializer=tf.zeros_initializer())
 
             W_r_e = tf.tile(tf.expand_dims(W_r, axis=0), multiples=[H_r_shape[0], 1, 1])
             W_f_e = tf.tile(tf.expand_dims(W_f, axis=0), multiples=[H_r_shape[0], 1, 1])
@@ -200,6 +200,7 @@ class Decoder(object):
 
             # f1 -> (b, q, 2n)
             f1 = tf.nn.tanh(tf.matmul(H_r, W_r_e) + B_r)
+            f1 = tf.nn.dropout(f1, keep_prob=keep_prob)
             with tf.name_scope('starter_score'):
                 # s_score -> (b, q, 1)
                 s_score = tf.matmul(f1, W_f_e) + B_f
