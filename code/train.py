@@ -118,7 +118,7 @@ def main(_):
         save_train_dir = get_normalized_train_dir(cfg.train_dir)
 
         qa.train(sess, dataset, answers, save_train_dir, raw_answers, rev_vocab,
-                 # debug_num=1000
+                 debug_num=1000
                  )
         #
         qa.evaluate_answer(sess, dataset, raw_answers, rev_vocab,

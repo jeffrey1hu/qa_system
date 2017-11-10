@@ -20,6 +20,8 @@ from evaluate import exact_match_score, f1_score
 from utils.matchLSTM_cell import matchLSTMcell
 from config import Config as cfg
 
+import matplotlib
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 from os.path import join as pjoin
 
