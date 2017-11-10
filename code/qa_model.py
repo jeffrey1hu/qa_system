@@ -438,9 +438,9 @@ class QASystem(object):
         input_batch_size = 100
 
         if training:
-            train_context = dataset['train_context'][:sample[0]]
-            train_question = dataset['train_question'][:sample[0]]
-            train_answer = answers['raw_train_answer'][:sample[0]]
+            train_context = np.array(dataset['train_context'])[:sample[0]]
+            train_question = np.array(dataset['train_question'])[:sample[0]]
+            train_answer = np.array(answers['raw_train_answer'])[:sample[0]]
             train_len = len(train_context)
 
             if sendin and len(sendin) > 2:
@@ -481,10 +481,10 @@ class QASystem(object):
 
         f1 = 1.0
         em = 1.0
-        val_context = dataset[set_name + '_context'][:sample[1]]
-        val_question = dataset[set_name + '_question'][:sample[1]]
+        val_context = np.array(dataset[set_name + '_context'])[:sample[1]]
+        val_question = np.array(dataset[set_name + '_question'])[:sample[1]]
         # ['Corpus Juris Canonici', 'the Northside', 'Naples', ...]
-        val_answer = answers['raw_val_answer'][:sample[1]]
+        val_answer = np.array(answers['raw_val_answer'])[:sample[1]]
 
         val_len = len(val_context)
         # logging.info('calculating the validation set predictions.')
