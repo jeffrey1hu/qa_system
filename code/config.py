@@ -45,7 +45,7 @@ class Config:
     cache_dir = 'cache'
 
     # print the loss stat during training
-    print_every = 100
+    print_every = 20
     # evaluate sample during test
     sample = 100
     # save checkpoint every n iteration

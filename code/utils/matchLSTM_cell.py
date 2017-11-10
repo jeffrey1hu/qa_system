@@ -3,6 +3,7 @@ sys.path.append('..')
 
 import tensorflow as tf
 from tensorflow.contrib.rnn import RNNCell
+from identity_initializer import identity_initializer
 
 from config import Config as cfg
 
@@ -33,11 +34,12 @@ class matchLSTMcell(RNNCell):
             example_num = tf.shape(inputs)[0]
 
             # TODO: figure out the right way to initialize rnn weights.
-            initializer = tf.contrib.layers.xavier_initializer()
+            # initializer = tf.contrib.layers.xavier_initializer()
+            initializer = tf.uniform_unit_scaling_initializer(1.0)
             # tf.name_scope()
             w_q = tf.get_variable("W_q", shape=[self.input_size, self.input_size], dtype=dtype, initializer=initializer)
             w_p = tf.get_variable("W_p", shape=[self.input_size, self.input_size], dtype=dtype, initializer=initializer)
-            w_r = tf.get_variable("W_r", shape=[self.state_size, self.input_size], dtype=dtype, initializer=initializer)
+            w_r = tf.get_variable("W_r", shape=[self.state_size, self.input_size], dtype=dtype, initializer=identity_initializer())
             w_a = tf.get_variable("W_a", shape=[self.input_size, 1], dtype=dtype, initializer=initializer)
 
             b_p = tf.get_variable("b_p", shape=[self.input_size], initializer=tf.zeros_initializer(), dtype=dtype)
@@ -68,7 +70,7 @@ class matchLSTMcell(RNNCell):
             W_r_gru = tf.get_variable("W_r_gru",
                                       shape=[self._state_size, self._state_size],
                                       dtype=dtype,
-                                      initializer=initializer)
+                                      initializer=identity_initializer())
             U_r_gru = tf.get_variable("U_r_gru",
                                       shape=[self.input_size * 2, self._state_size],
                                       dtype=dtype,
@@ -83,7 +85,7 @@ class matchLSTMcell(RNNCell):
             W_z_gru = tf.get_variable("W_z_gru",
                                       shape=[self._state_size, self._state_size],
                                       dtype=dtype,
-                                      initializer=initializer)
+                                      initializer=identity_initializer())
 
             U_z_gru = tf.get_variable("U_z_gru",
                                       shape=[self.input_size * 2, self._state_size],
@@ -99,14 +101,14 @@ class matchLSTMcell(RNNCell):
             W_o_gru = tf.get_variable("W_o_gru",
                                       shape=[self._state_size, self._state_size],
                                       dtype=dtype,
-                                      initializer=initializer)
+                                      initializer=identity_initializer())
 
             U_o_gru = tf.get_variable("U_o_gru",
                                       shape=[self.input_size * 2, self._state_size],
                                       dtype=dtype,
                                       initializer=initializer)
 
-            b_o_gru = tf.get_variable("b_o_gru", shape=[self._state_size], dtype=dtype)
+            b_o_gru = tf.get_variable("b_o_gru", shape=[self._state_size], dtype=dtype, initializer=tf.constant_initializer(0.0))
 
             z_t = tf.nn.sigmoid(tf.matmul(z, U_z_gru) + tf.matmul(state, W_z_gru) + b_z_gru)
             r_t = tf.nn.sigmoid(tf.matmul(z, U_r_gru) + tf.matmul(state, W_r_gru) + b_r_gru)
