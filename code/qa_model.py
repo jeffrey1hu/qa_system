@@ -20,6 +20,7 @@ from evaluate import exact_match_score, f1_score
 from utils.matchLSTM_cell import matchLSTMcell
 from config import Config as cfg
 
+import matplotlib.pyplot as plt
 from os.path import join as pjoin
 
 logging.basicConfig(level=logging.INFO)
@@ -32,6 +33,15 @@ keep_prob = cfg.keep_prob
 start_lr = cfg.start_lr
 max_grad_norm = cfg.max_grad_norm
 regularizer = tf.contrib.layers.l2_regularizer(cfg.reg)
+
+
+def smooth(a, beta=0.8):
+    '''smooth the curve'''
+
+    for i in xrange(1, len(a)):
+        a[i] = beta * a[i-1] + (1 - beta)*a[i]
+    return a
+
 
 def variable_summaries(var):
     """Attach a lot of summaries to a Tensor (for TensorBoard visualization)."""
@@ -90,8 +100,9 @@ class Encoder(object):
         # context shape -> (None, P)
         # context embed -> (None, P, n)
         context_embed = tf.nn.embedding_lookup(embedding, context)
-
+        context_embed = tf.nn.dropout(context_embed, keep_prob=keep_prob)
         question_embed = tf.nn.embedding_lookup(embedding, question)
+        question_embed = tf.nn.dropout(question_embed, keep_prob=keep_prob)
 
         with tf.variable_scope('context_lstm'):
             con_lstm_fw_cell = rnn.BasicLSTMCell(n_hidden, forget_bias=1.0)
@@ -187,16 +198,18 @@ class Decoder(object):
 
             # f1 -> (b, q, 2n)
             f1 = tf.nn.tanh(tf.matmul(H_r, W_r_e) + B_r)
-            # s_score -> (b, q, 1)
-            s_score = tf.matmul(f1, W_f_e) + B_f
-            # s_score -> (b, q)
-            s_score = tf.squeeze(s_score, axis=2)
-            variable_summaries(s_score)
+            with tf.name_scope('starter_score'):
+                # s_score -> (b, q, 1)
+                s_score = tf.matmul(f1, W_f_e) + B_f
+                # s_score -> (b, q)
+                s_score = tf.squeeze(s_score, axis=2)
+                variable_summaries(s_score)
 
-            # the prob distribution of start index
-            s_prob = tf.nn.softmax(s_score)
-            s_prob = s_prob * context_m
-            variable_summaries(s_prob)
+            with tf.name_scope('starter_prob'):
+                # the prob distribution of start index
+                s_prob = tf.nn.softmax(s_score)
+                s_prob = s_prob * context_m
+                variable_summaries(s_prob)
             # Hr_attend -> (batch_size, 4n)
             Hr_attend = tf.reduce_sum(H_r * tf.expand_dims(s_prob, axis=2), axis=1)
 
@@ -204,13 +217,15 @@ class Decoder(object):
                             + tf.matmul(tf.tile(tf.expand_dims(Hr_attend, axis=1), multiples=[1, H_r_shape[1], 1]), W_h_e)
                             + B_r)
 
-            e_score = tf.matmul(f2, W_f_e) + B_f
-            e_score = tf.squeeze(e_score, axis=2)
-            variable_summaries(e_score)
+            with tf.name_scope('end_score'):
+                e_score = tf.matmul(f2, W_f_e) + B_f
+                e_score = tf.squeeze(e_score, axis=2)
+                variable_summaries(e_score)
 
-            e_prob = tf.nn.softmax(e_score)
-            e_prob = tf.multiply(e_prob, context_m)
-            variable_summaries(e_prob)
+            with tf.name_scope('end_prob'):
+                e_prob = tf.nn.softmax(e_score)
+                e_prob = tf.multiply(e_prob, context_m)
+                variable_summaries(e_prob)
 
         return s_score, e_score
 
@@ -297,6 +312,7 @@ class QASystem(object):
         Loads distributed word representations based on placeholder tokens
         :return:
         """
+        logging.info('embed size: {} for path {}'.format(cfg.embed_size, self.embed_path))
         with vs.variable_scope("embeddings"):
             self.embedding = np.load(self.embed_path)['glove']
             self.embedding = tf.Variable(self.embedding, dtype=tf.float32, trainable=False)
@@ -593,10 +609,11 @@ class QASystem(object):
                 if self.iters % cfg.save_every == 0:
                     self.saver.save(session, save_path, global_step=self.iters)
                     self.evaluate_answer(session, dataset, raw_answers, rev_vocab,
-                                         training=True, log=True, sample=4000)
+                                         training=False, log=True, sample=4000)
             if cfg.save_every_epoch:
                 self.saver.save(session, save_path, global_step=self.iters)
-
+                self.evaluate_answer(session, dataset, raw_answers, rev_vocab,
+                                     training=False, log=True, sample=4000)
             logging.info('average loss of epoch {}/{} is {}'.format(ep + 1, self.epochs, ep_loss / batch_num))
 
             data_dict = {'losses': self.losses, 'norms': self.norms,
@@ -604,3 +621,45 @@ class QASystem(object):
             c_time = time.strftime('%Y%m%d_%H%M', time.localtime())
             data_save_path = pjoin('cache', str(self.iters) + 'iters' + c_time + '.npz')
             np.savez(data_save_path, data_dict)
+            self.draw_figs(c_time, start_lr)
+
+            # plt.show()
+
+    def draw_figs(self, c_time, lr):
+        '''draw figs'''
+        fig, _ = plt.subplots(nrows=2, ncols=1)
+        plt.subplot(2, 1, 1)
+        plt.plot(smooth(self.losses))
+        plt.xlabel('iterations')
+        plt.ylabel('loss')
+
+        plt.subplot(2, 1, 2)
+        plt.plot(smooth(self.norms))
+        plt.xlabel('iterations')
+        plt.ylabel('gradients norms')
+        plt.title('lr={}'.format(lr))
+        fig.tight_layout()
+
+        output_fig = 'lr-' + str(lr) + 'loss-norms' + c_time + '.pdf'
+        plt.savefig(pjoin(cfg.fig_dir, output_fig), format='pdf')
+
+        # plt.figure()
+        fig, _ = plt.subplots(nrows=2, ncols=1)
+        plt.subplot(2, 1, 1)
+        plt.plot(smooth([x[0] for x in self.train_evals]))
+        plt.plot(smooth([x[0] for x in self.val_evals]))
+        plt.legend(['train', 'val'], loc='upper left')
+        plt.xlabel('iterations')
+        plt.ylabel('f1 score')
+
+        plt.subplot(2, 1, 2)
+        plt.plot([x[1] for x in self.train_evals])
+        plt.plot([x[1] for x in self.val_evals])
+        plt.legend(['train', 'val'], loc='upper left')
+        plt.xlabel('iterations')
+        plt.ylabel('em score')
+        plt.title('lr={}'.format(lr))
+        fig.tight_layout()
+
+        eval_out = 'lr-' + str(lr) + 'f1-em' + c_time + '.pdf'
+        plt.savefig(pjoin(cfg.fig_dir, eval_out), format='pdf')

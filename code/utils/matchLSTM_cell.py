@@ -31,6 +31,8 @@ class matchLSTMcell(RNNCell):
         with tf.variable_scope(scope):
             # the batch size
             example_num = tf.shape(inputs)[0]
+
+            # TODO: figure out the right way to initialize rnn weights.
             initializer = tf.contrib.layers.xavier_initializer()
             # tf.name_scope()
             w_q = tf.get_variable("W_q", shape=[self.input_size, self.input_size], dtype=dtype, initializer=initializer)
@@ -38,8 +40,8 @@ class matchLSTMcell(RNNCell):
             w_r = tf.get_variable("W_r", shape=[self.state_size, self.input_size], dtype=dtype, initializer=initializer)
             w_a = tf.get_variable("W_a", shape=[self.input_size, 1], dtype=dtype, initializer=initializer)
 
-            b_p = tf.get_variable("b_p", shape=[self.input_size], dtype=dtype)
-            b_a = tf.get_variable("b_a", shape=[1], dtype=dtype)
+            b_p = tf.get_variable("b_p", shape=[self.input_size], initializer=tf.zeros_initializer(), dtype=dtype)
+            b_a = tf.get_variable("b_a", shape=[1], initializer=tf.zeros_initializer(), dtype=dtype)
 
             # w_q_e -> b * 2n * 2n
             w_q_e = tf.tile(tf.expand_dims(w_q, axis=0), [example_num, 1, 1])
