@@ -463,7 +463,7 @@ class QASystem(object):
 
             # a_s and a_e -> (sample_num)
             for i in range(train_len):
-                prediction_ids = train_context[i, 0, train_a_s[i]:train_a_e[i]+1]
+                prediction_ids = train_context[i][0][train_a_s[i]:train_a_e[i]]
                 prediction_answer = ' '.join(rev_vocab[prediction_ids])
                 raw_answer = train_answer[i]
                 tf1 += f1_score(prediction_answer, raw_answer)
@@ -499,7 +499,7 @@ class QASystem(object):
 
         # a_s and a_e -> (sample_num)
         for i in range(val_len):
-            prediction_ids = val_context[i, 0, val_a_s[i]:val_a_e[i]]
+            prediction_ids = val_context[i][0][val_a_s[i]:val_a_e[i]]
             prediction_answer = ' '.join(rev_vocab[prediction_ids])
             raw_answer = val_answer[i]
             f1 += f1_score(prediction_answer, raw_answer)
