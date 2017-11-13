@@ -416,8 +416,7 @@ class QASystem(object):
 
 
     def evaluate_answer(self, session, dataset, raw_answers, rev_vocab,
-                        sample=(100, 100), log=False, training=False,
-                        sendin=None, ensemble=True):
+                        sample=(100, 100), log=False, training=False):
         """
         Evaluate the model's performance using the harmonic mean of F1 and Exact Match (EM)
         with the set of true answer labels
@@ -469,10 +468,10 @@ class QASystem(object):
                 raw_answer = train_answer[i]
                 tf1 += f1_score(prediction_answer, raw_answer)
                 tem += exact_match_score(prediction_answer, raw_answer)
-                if i < 10:
-                    print("predict_answer: ", prediction_answer)
-                    print("ground truth: ", raw_answer)
-                    print ("f1: ", f1_score(prediction_answer, raw_answer))
+                # if i < 10:
+                #     print("predict_answer: ", prediction_answer)
+                #     print("ground truth: ", raw_answer)
+                #     print ("f1: ", f1_score(prediction_answer, raw_answer))
 
             if log:
                 logging.info("Training set ==> F1: {}, EM: {}, for {} samples".
@@ -504,10 +503,10 @@ class QASystem(object):
             raw_answer = val_answer[i]
             f1 += f1_score(prediction_answer, raw_answer)
             em += exact_match_score(prediction_answer, raw_answer)
-            if i < 10:
-                print("predict_answer: ", prediction_answer)
-                print("ground truth: ", raw_answer)
-                print ("f1: ", f1_score(prediction_answer, raw_answer))
+            # if i < 10:
+            #     print("predict_answer: ", prediction_answer)
+            #     print("ground truth: ", raw_answer)
+            #     print ("f1: ", f1_score(prediction_answer, raw_answer))
 
         if log:
             logging.info("val set ==> F1: {}, EM: {}, for {} samples".
@@ -638,8 +637,8 @@ class QASystem(object):
                                          training=False, log=True, sample=4000)
             if cfg.save_every_epoch:
                 self.saver.save(session, save_path, global_step=self.iters)
-                # self.evaluate_answer(session, dataset, raw_answers, rev_vocab,
-                #                      training=False, log=True, sample=4000)
+                self.evaluate_answer(session, dataset, raw_answers, rev_vocab,
+                                     training=False, log=True, sample=4000)
             logging.info('average loss of epoch {}/{} is {}'.format(ep + 1, self.epochs, ep_loss / batch_num))
 
             data_dict = {'losses': self.losses, 'norms': self.norms,
