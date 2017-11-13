@@ -161,7 +161,7 @@ class Encoder(object):
 
 
 class Decoder(object):
-    def __init__(self, output_size):
+    def __init__(self, output_size=2 * n_hidden):
         self.output_size = output_size
 
     def decode(self, H_r, context_m):
@@ -413,14 +413,115 @@ class QASystem(object):
 
 
         return valid_cost
+
+    # def evaluate_answer(self, session, dataset, raw_answers, rev_vocab,
+    #                     sample=(100, 100), log=False, training=False,
+    #                     sendin=None, ensemble=True):
+    #     """
+    #     Evaluate the model's performance using the harmonic mean of F1 and Exact Match (EM)
+    #     with the set of true answer labels
+    #
+    #     This step actually takes quite some time. So we can only sample 100 examples
+    #     from either training or testing set.
+    #
+    #     :param session: session should always be centrally managed in train.py
+    #     :param dataset: a representation of our data, in some implementations, you can
+    #                     pass in multiple components (arguments) of one dataset to this function
+    #     :param sample: how many examples in dataset we look at
+    #     :param log: whether we print to std out stream
+    #     :return:
+    #     """
+    #     if not isinstance(rev_vocab, np.ndarray):
+    #         rev_vocab = np.array(rev_vocab)
+    #
+    #     if not isinstance(sample, tuple):
+    #         sample = (sample, sample)
+    #
+    #     tf1 = 0.
+    #     tem = 0.
+    #
+    #     input_batch_size = 100
+    #
+    #     if training:
+    #         train_len = sample[0]
+    #         samples = np.random.choice(range(len(dataset['train_context'])), train_len)
+    #
+    #         train_context = np.array(dataset['train_context'])[samples, :, :]
+    #         train_question = np.array(dataset['train_question'])[samples, :, :]
+    #         train_answer = np.array(raw_answers['raw_train_answer'])[samples]
+    #
+    #
+    #         train_a_e = np.array([], dtype=np.int32)
+    #         train_a_s = np.array([], dtype=np.int32)
+    #
+    #         for i in tqdm(range(train_len // input_batch_size), desc='trianing set'):
+    #             train_as, train_ae = self.answer(session,
+    #                                              train_context[i * input_batch_size:(i + 1) * input_batch_size],
+    #                                              train_question[i * input_batch_size:(i + 1) * input_batch_size])
+    #
+    #             train_a_e = np.concatenate((train_a_e, train_ae), axis=0)
+    #             train_a_s = np.concatenate((train_a_s, train_as), axis=0)
+    #
+    #         # a_s and a_e -> (sample_num)
+    #         for i in range(train_len):
+    #             prediction_ids = train_context[i, 0, train_a_s[i]:train_a_e[i]+1]
+    #             prediction_answer = ' '.join(rev_vocab[prediction_ids])
+    #             raw_answer = train_answer[i]
+    #             tf1 += f1_score(prediction_answer, raw_answer)
+    #             tem += exact_match_score(prediction_answer, raw_answer)
+    #
+    #         if log:
+    #             logging.info("Training set ==> F1: {}, EM: {}, for {} samples".
+    #                          format(tf1 / train_len, tem / train_len, train_len))
+    #
+    #     f1 = 0.
+    #     em = 0.
+    #     val_len = sample[1]
+    #     samples = np.random.choice(range(len(dataset['val_context'])), val_len)
+    #
+    #     val_context = np.array(dataset['val_context'])[samples, :, :]
+    #     val_question = np.array(dataset['val_question'])[samples, :, :]
+    #     val_answer = np.array(raw_answers['raw_val_answer'])[samples]
+    #
+    #     val_a_e = np.array([], dtype=np.int32)
+    #     val_a_s = np.array([], dtype=np.int32)
+    #
+    #     for i in tqdm(range(val_len // input_batch_size), desc='val set'):
+    #         val_as, val_ae = self.answer(session,
+    #                                          val_context[i * input_batch_size:(i + 1) * input_batch_size],
+    #                                          val_question[i * input_batch_size:(i + 1) * input_batch_size])
+    #
+    #         val_a_e = np.concatenate((val_a_e, val_ae), axis=0)
+    #         val_a_s = np.concatenate((val_a_s, val_as), axis=0)
+    #
+    #     # a_s and a_e -> (sample_num)
+    #     for i in range(val_len):
+    #         prediction_ids = val_context[i, 0, val_a_s[i]:val_a_e[i]]
+    #         prediction_answer = ' '.join(rev_vocab[prediction_ids])
+    #         raw_answer = val_answer[i]
+    #         f1 += f1_score(prediction_answer, raw_answer)
+    #         em += exact_match_score(prediction_answer, raw_answer)
+    #
+    #     if log:
+    #         logging.info("val set ==> F1: {}, EM: {}, for {} samples".
+    #                      format(f1 / val_len, em / val_len, val_len))
+    #
+    #     if training:
+    #         return tf1/train_len, tem/train_len, f1/val_len, em/val_len
+    #     else:
+    #         return f1/val_len, em/val_len
+
+
     def evaluate_answer(self, session, dataset, answers, rev_vocab,
                         set_name='val', training=False, log=False,
                         sample=(100, 100), sendin=None, ensemble=True):
         """
         Evaluate the model's performance using the harmonic mean of F1 and Exact Match (EM)
         with the set of true answer labels
+
         This step actually takes quite some time. So we can only sample 100 examples
         from either training or testing set.
+
         :param session: session should always be centrally managed in train.py
         :param dataset: a representation of our data, in some implementations, you can
                         pass in multiple components (arguments) of one dataset to this function
@@ -438,9 +539,9 @@ class QASystem(object):
         input_batch_size = 100
 
         if training:
-            train_context = np.array(dataset['train_context'])[:sample[0]]
-            train_question = np.array(dataset['train_question'])[:sample[0]]
-            train_answer = np.array(answers['raw_train_answer'])[:sample[0]]
+            train_context = dataset['train_context'][:sample[0]]
+            train_question = dataset['train_question'][:sample[0]]
+            train_answer = answers['raw_train_answer'][:sample[0]]
             train_len = len(train_context)
 
             if sendin and len(sendin) > 2:
@@ -481,10 +582,10 @@ class QASystem(object):
 
         f1 = 1.0
         em = 1.0
-        val_context = np.array(dataset[set_name + '_context'])[:sample[1]]
-        val_question = np.array(dataset[set_name + '_question'])[:sample[1]]
+        val_context = dataset[set_name + '_context'][:sample[1]]
+        val_question = dataset[set_name + '_question'][:sample[1]]
         # ['Corpus Juris Canonici', 'the Northside', 'Naples', ...]
-        val_answer = np.array(answers['raw_val_answer'])[:sample[1]]
+        val_answer = answers['raw_val_answer'][:sample[1]]
 
         val_len = len(val_context)
         # logging.info('calculating the validation set predictions.')
@@ -529,97 +630,6 @@ class QASystem(object):
             return val_a_s, val_a_e
         # else:
         #     return tf1 / train_len, tem / train_len, f1 / val_len, em / val_len
-    #
-    # def evaluate_answer(self, session, dataset, raw_answers, rev_vocab, sample=100, log=False, training=False):
-    #     """
-    #     Evaluate the model's performance using the harmonic mean of F1 and Exact Match (EM)
-    #     with the set of true answer labels
-    #
-    #     This step actually takes quite some time. So we can only sample 100 examples
-    #     from either training or testing set.
-    #
-    #     :param session: session should always be centrally managed in train.py
-    #     :param dataset: a representation of our data, in some implementations, you can
-    #                     pass in multiple components (arguments) of one dataset to this function
-    #     :param sample: how many examples in dataset we look at
-    #     :param log: whether we print to std out stream
-    #     :return:
-    #     """
-    #     if not isinstance(rev_vocab, np.ndarray):
-    #         rev_vocab = np.array(rev_vocab)
-    #
-    #     tf1 = 0.
-    #     tem = 0.
-    #
-    #     input_batch_size = 100
-    #
-    #     if training:
-    #         samples = np.random.choice(range(len(dataset['train_context'])), sample)
-    #
-    #         train_context = np.array(dataset['train_context'])[samples, :, :]
-    #         train_question = np.array(dataset['train_question'])[samples, :, :]
-    #         train_answer = np.array(raw_answers['raw_train_answer'])[samples]
-    #         train_len = len(train_context)
-    #
-    #         train_a_e = np.array([], dtype=np.int32)
-    #         train_a_s = np.array([], dtype=np.int32)
-    #
-    #         for i in tqdm(range(sample // input_batch_size), desc='trianing set'):
-    #             train_as, train_ae = self.answer(session,
-    #                                              train_context[i * input_batch_size:(i + 1) * input_batch_size],
-    #                                              train_question[i * input_batch_size:(i + 1) * input_batch_size])
-    #
-    #             train_a_e = np.concatenate((train_a_e, train_ae), axis=0)
-    #             train_a_s = np.concatenate((train_a_s, train_as), axis=0)
-    #
-    #         # a_s and a_e -> (sample_num)
-    #         for i in range(sample):
-    #             prediction_ids = train_context[i, 0, train_a_s[i]:train_a_e[i]+1]
-    #             prediction_answer = ' '.join(rev_vocab[prediction_ids])
-    #             raw_answer = train_answer[i]
-    #             tf1 += f1_score(prediction_answer, raw_answer)
-    #             tem += exact_match_score(prediction_answer, raw_answer)
-    #
-    #         if log:
-    #             logging.info("Training set ==> F1: {}, EM: {}, for {} samples".
-    #                          format(tf1 / train_len, tem / train_len, train_len))
-    #
-    #     f1 = 0.
-    #     em = 0.
-    #     samples = np.random.choice(range(len(dataset['val_context'])), sample)
-    #
-    #     val_context = np.array(dataset['val_context'])[samples, :, :]
-    #     val_question = np.array(dataset['val_question'])[samples, :, :]
-    #     val_answer = np.array(raw_answers['raw_val_answer'])[samples]
-    #     val_len = len(val_answer)
-    #
-    #     val_a_e = np.array([], dtype=np.int32)
-    #     val_a_s = np.array([], dtype=np.int32)
-    #
-    #     for i in tqdm(range(sample // input_batch_size), desc='val set'):
-    #         val_as, val_ae = self.answer(session,
-    #                                          val_context[i * input_batch_size:(i + 1) * input_batch_size],
-    #                                          val_question[i * input_batch_size:(i + 1) * input_batch_size])
-    #
-    #         val_a_e = np.concatenate((val_a_e, val_ae), axis=0)
-    #         val_a_s = np.concatenate((val_a_s, val_as), axis=0)
-    #
-    #     # a_s and a_e -> (sample_num)
-    #     for i in range(sample):
-    #         prediction_ids = val_context[i, 0, val_a_s[i]:val_a_e[i]]
-    #         prediction_answer = ' '.join(rev_vocab[prediction_ids])
-    #         raw_answer = val_answer[i]
-    #         f1 += f1_score(prediction_answer, raw_answer)
-    #         em += exact_match_score(prediction_answer, raw_answer)
-    #
-    #     if log:
-    #         logging.info("val set ==> F1: {}, EM: {}, for {} samples".
-    #                      format(f1 / val_len, em / val_len, val_len))
-    #
-    #     if training:
-    #         return tf1/sample, tem/sample, f1/sample, em/sample
-    #     else:
-    #         return f1/sample, em/sample
 
     def train(self, session, dataset, answers, train_dir, raw_answers, rev_vocab, debug_num=None):
         """
