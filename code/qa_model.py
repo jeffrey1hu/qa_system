@@ -554,8 +554,8 @@ class QASystem(object):
                     # sys.stdout.write('>>> %d / %d \r'%(i, train_len // input_batch_size))
                     # sys.stdout.flush()
                     train_as, train_ae = self.answer(session,
-                                                     train_context[i * input_batch_size:(i + 1) * input_batch_size],
-                                                     train_question[i * input_batch_size:(i + 1) * input_batch_size])
+                                                     np.array(train_context[i * input_batch_size:(i + 1) * input_batch_size]),
+                                                     np.array(train_question[i * input_batch_size:(i + 1) * input_batch_size]))
                     train_a_s = np.concatenate((train_a_s, train_as), axis=0)
                     train_a_e = np.concatenate((train_a_e, train_ae), axis=0)
 
@@ -567,11 +567,11 @@ class QASystem(object):
                 prediction_ids = con[0][train_a_s[i]: train_a_e[i] + 1]
                 prediction = rev_vocab[prediction_ids]
                 prediction = ' '.join(prediction)
-                # if i < 10:
-                #     print('context: {}'.format(con[0]))
-                #     print('prediction: {}'.format( prediction))
-                #     print(' g-truth:   {}'.format( train_answer[i]))
-                #     print('f1_score: {}'.format(f1_score(prediction, train_answer[i])))
+                if i < 10:
+                    print('context: {}'.format(con[0]))
+                    print('prediction: {}'.format( prediction))
+                    print(' g-truth:   {}'.format( train_answer[i]))
+                    print('f1_score: {}'.format(f1_score(prediction, train_answer[i])))
 
                 tf1 += f1_score(prediction, train_answer[i])
                 tem += exact_match_score(prediction, train_answer[i])
@@ -600,8 +600,8 @@ class QASystem(object):
             for i in tqdm(range(val_len // input_batch_size), desc='validation   '):
                 # sys.stdout.write('>>> %d / %d \r'%(i, val_len // input_batch_size))
                 # sys.stdout.flush()
-                a_s, a_e = self.answer(session, val_context[i * input_batch_size:(i + 1) * input_batch_size],
-                                       val_question[i * input_batch_size:(i + 1) * input_batch_size])
+                a_s, a_e = self.answer(session, np.array(val_context[i * input_batch_size:(i + 1) * input_batch_size]),
+                                       np.array(val_question[i * input_batch_size:(i + 1) * input_batch_size]))
                 val_a_s = np.concatenate((val_a_s, a_s), axis=0)
                 val_a_e = np.concatenate((val_a_e, a_e), axis=0)
 
