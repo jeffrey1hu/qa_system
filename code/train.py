@@ -117,6 +117,7 @@ def main(_):
 
         save_train_dir = get_normalized_train_dir(cfg.train_dir)
 
+        tic = time.time()
         qa.train(sess, dataset, answers, save_train_dir, raw_answers, rev_vocab,
                  # debug_num=1000
                  )
@@ -125,5 +126,7 @@ def main(_):
                            log=True,
                            training=True,
                            sample=4000)
+        toc = time.time()
+        logging.info("Total training process took {} seconds".format(toc - tic))
 if __name__ == "__main__":
     tf.app.run()

@@ -269,7 +269,7 @@ class QASystem(object):
             self.global_step = tf.Variable(0, trainable=False)
             self.starter_learning_rate = tf.placeholder(tf.float32, name='start_lr')
             learning_rate = tf.train.exponential_decay(self.starter_learning_rate, self.global_step,
-                                                       1000, 0.96, staircase=True)
+                                                       200, 0.96, staircase=True)
             tf.summary.scalar('learning_rate', learning_rate)
             self.optimizer = tf.train.AdamOptimizer(learning_rate)
 
@@ -634,11 +634,11 @@ class QASystem(object):
                 if self.iters % cfg.save_every == 0:
                     self.saver.save(session, save_path, global_step=self.iters)
                     self.evaluate_answer(session, dataset, raw_answers, rev_vocab,
-                                         training=False, log=True, sample=4000)
+                                         training=True, log=True, sample=4000)
             if cfg.save_every_epoch:
                 self.saver.save(session, save_path, global_step=self.iters)
                 self.evaluate_answer(session, dataset, raw_answers, rev_vocab,
-                                     training=False, log=True, sample=4000)
+                                     training=True, log=True, sample=4000)
             logging.info('average loss of epoch {}/{} is {}'.format(ep + 1, self.epochs, ep_loss / batch_num))
 
             data_dict = {'losses': self.losses, 'norms': self.norms,

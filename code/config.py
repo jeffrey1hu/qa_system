@@ -11,7 +11,7 @@ class Config:
     # maximum length of question
     question_max_len = 30
 
-    epochs = 5
+    epochs = 8
     embed_size = 100
     batch_size = 128
     start_lr = 5e-4
@@ -19,7 +19,7 @@ class Config:
     reg = 0.001
 
     dtype = tf.float32
-    keep_prob = 1.0
+    keep_prob = 0.7
 
     # max_grad_norm = 5.0
     clip_by_val = 10.0
