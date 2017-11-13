@@ -450,29 +450,29 @@ class QASystem(object):
             train_answer = raw_answers['raw_train_answer'][:train_len]
 
 
-            train_a_e = np.array([], dtype=np.int32)
             train_a_s = np.array([], dtype=np.int32)
+            train_a_e = np.array([], dtype=np.int32)
 
             for i in tqdm(range(train_len // input_batch_size), desc='trianing set'):
                 train_as, train_ae = self.answer(session,
                                                  np.array(train_context[i * input_batch_size:(i + 1) * input_batch_size]),
                                                  np.array(train_question[i * input_batch_size:(i + 1) * input_batch_size]))
 
-                train_a_e = np.concatenate((train_a_e, train_ae), axis=0)
                 train_a_s = np.concatenate((train_a_s, train_as), axis=0)
+                train_a_e = np.concatenate((train_a_e, train_ae), axis=0)
 
             # a_s and a_e -> (sample_num)
             for i in range(train_len):
-                prediction_ids = train_context[i][0][train_a_s[i]:train_a_e[i]]
+                prediction_ids = train_context[i][0][train_a_s[i]:train_a_e[i]+1]
                 prediction_answer = ' '.join(rev_vocab[prediction_ids])
                 raw_answer = train_answer[i]
                 tf1 += f1_score(prediction_answer, raw_answer)
                 tem += exact_match_score(prediction_answer, raw_answer)
                 if i < 10:
+                    print(train_a_s[i],train_a_e[i])
                     print("predict_answer: ", prediction_answer)
                     print("ground truth: ", raw_answer)
                     print ("f1: ", f1_score(prediction_answer, raw_answer))
-                    print ("em: ", exact_match_score(prediction_answer, raw_answer))
 
             if log:
                 logging.info("Training set ==> F1: {}, EM: {}, for {} samples".
@@ -486,29 +486,29 @@ class QASystem(object):
         val_question = dataset['val_question'][:val_len]
         val_answer = raw_answers['raw_val_answer'][:val_len]
 
-        val_a_e = np.array([], dtype=np.int32)
         val_a_s = np.array([], dtype=np.int32)
+        val_a_e = np.array([], dtype=np.int32)
 
         for i in tqdm(range(val_len // input_batch_size), desc='val set'):
             val_as, val_ae = self.answer(session,
                                          np.array(val_context[i * input_batch_size:(i + 1) * input_batch_size]),
                                          np.array(val_question[i * input_batch_size:(i + 1) * input_batch_size]))
 
-            val_a_e = np.concatenate((val_a_e, val_ae), axis=0)
             val_a_s = np.concatenate((val_a_s, val_as), axis=0)
+            val_a_e = np.concatenate((val_a_e, val_ae), axis=0)
 
         # a_s and a_e -> (sample_num)
         for i in range(val_len):
-            prediction_ids = val_context[i][0][val_a_s[i]:val_a_e[i]]
+            prediction_ids = val_context[i][0][val_a_s[i]:val_a_e[i]+1]
             prediction_answer = ' '.join(rev_vocab[prediction_ids])
             raw_answer = val_answer[i]
             f1 += f1_score(prediction_answer, raw_answer)
             em += exact_match_score(prediction_answer, raw_answer)
             if i < 10:
+                print(val_a_s[i],val_a_e[i])
                 print("predict_answer: ", prediction_answer)
                 print("ground truth: ", raw_answer)
                 print ("f1: ", f1_score(prediction_answer, raw_answer))
-                print ("em: ", exact_match_score(prediction_answer, raw_answer))
 
         if log:
             logging.info("val set ==> F1: {}, EM: {}, for {} samples".
