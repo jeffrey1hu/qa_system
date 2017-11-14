@@ -269,7 +269,7 @@ class QASystem(object):
             self.global_step = tf.Variable(0, trainable=False)
             self.starter_learning_rate = tf.placeholder(tf.float32, name='start_lr')
             learning_rate = tf.train.exponential_decay(self.starter_learning_rate, self.global_step,
-                                                       200, 0.96, staircase=True)
+                                                       250, 0.96, staircase=True)
             tf.summary.scalar('learning_rate', learning_rate)
             self.optimizer = tf.train.AdamOptimizer(learning_rate)
 
