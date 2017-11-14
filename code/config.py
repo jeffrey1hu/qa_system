@@ -13,7 +13,7 @@ class Config:
 
     epochs = 5
     embed_size = 100
-    batch_size = 32
+    batch_size = 128
     start_lr = 5e-4
 
     reg = 0.001
@@ -48,7 +48,7 @@ class Config:
     cache_dir = 'cache'
 
     # print the loss stat during training
-    print_every = 10
+    print_every = 40
     # evaluate sample during test
     sample = 100
     # save checkpoint every n iteration
