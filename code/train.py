@@ -127,6 +127,6 @@ def main(_):
                            training=True,
                            sample=4000)
         toc = time.time()
-        logging.info("Total training process took {} seconds".format(toc - tic))
+        logging.info("Total training process took {} hours".format((toc - tic)/3600.))
 if __name__ == "__main__":
     tf.app.run()

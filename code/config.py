@@ -13,7 +13,7 @@ class Config:
 
     epochs = 5
     embed_size = 100
-    batch_size = 32
+    batch_size = 128
     start_lr = 5e-4
 
     reg = 0.001
@@ -37,15 +37,17 @@ class Config:
 
     vocab_file = 'vocab.dat'
 
-    train_dir = 'train/ckpt'
+    setting_prefix = 'batch_size128keep_prob08'
 
-    summary_dir = 'summary/summary_'
+    train_dir = 'train/{}'.format(setting_prefix)
 
-    log_dir = 'log'
+    summary_dir = 'summary/{}/summary_'.format(setting_prefix)
 
-    fig_dir = 'fig'
+    log_dir = 'log/{}'.format(setting_prefix)
 
-    cache_dir = 'cache'
+    fig_dir = 'fig/{}'.format(setting_prefix)
+
+    cache_dir = 'cache/{}'.format(setting_prefix)
 
     # print the loss stat during training
     print_every = 40
