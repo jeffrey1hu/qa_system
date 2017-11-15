@@ -266,7 +266,7 @@ class QASystem(object):
 
             # ==== set up training/updating procedure ====
 
-            self.global_step = tf.Variable(0, trainable=False)
+            self.global_step = tf.Variable(cfg.start_steps, trainable=False)
             self.starter_learning_rate = tf.placeholder(tf.float32, name='start_lr')
             learning_rate = tf.train.exponential_decay(self.starter_learning_rate, self.global_step,
                                                        250, 0.96, staircase=True)
@@ -581,7 +581,7 @@ class QASystem(object):
         self.norms = []
         self.train_evals = []
         self.val_evals = []
-        self.iters = 0
+        self.iters = cfg.start_steps
         save_path = pjoin(train_dir, 'weights')
 
         self.train_writer = tf.summary.FileWriter(cfg.summary_dir + str(start_lr),

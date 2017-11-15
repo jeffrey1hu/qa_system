@@ -49,6 +49,9 @@ class Config:
 
     cache_dir = 'cache/{}'.format(setting_prefix)
 
+    # start steps
+    start_steps = 3175
+
     # print the loss stat during training
     print_every = 40
     # evaluate sample during test
