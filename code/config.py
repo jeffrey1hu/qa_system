@@ -11,7 +11,7 @@ class Config:
     # maximum length of question
     question_max_len = 30
 
-    epochs = 5
+    epochs = 20
     embed_size = 100
     batch_size = 128
     start_lr = 5e-4
@@ -50,7 +50,7 @@ class Config:
     cache_dir = 'cache/{}'.format(setting_prefix)
 
     # start steps
-    start_steps = 3175
+    start_steps = 6320
 
     # print the loss stat during training
     print_every = 40

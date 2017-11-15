@@ -589,7 +589,7 @@ class QASystem(object):
 
         batch_size = cfg.batch_size
         batch_num = int(num_example / batch_size)
-        total_iterations = self.epochs * batch_num
+        total_iterations = self.epochs * batch_num + cfg.start_steps
 
         tic = time.time()
 
