@@ -19,7 +19,7 @@ class Config:
     reg = 0.001
 
     dtype = tf.float32
-    keep_prob = 0.8
+    keep_prob = 1.0
 
     # max_grad_norm = 5.0
     clip_by_val = 10.0
@@ -37,7 +37,7 @@ class Config:
 
     vocab_file = 'vocab.dat'
 
-    setting_prefix = 'batch_size128keep_prob08'
+    setting_prefix = 'batch_size128keep_prob1'
 
     train_dir = 'train/{}'.format(setting_prefix)
 
@@ -50,7 +50,7 @@ class Config:
     cache_dir = 'cache/{}'.format(setting_prefix)
 
     # start steps
-    start_steps = 6320
+    start_steps = 0
 
     # print the loss stat during training
     print_every = 40
