@@ -7,24 +7,24 @@ from os.path import join as pjoin
 
 class Config:
     # maximum length of context
-    context_max_len = 400
+    context_max_len = 350
     # maximum length of question
-    question_max_len = 30
+    question_max_len = 25
 
     epochs = 20
-    embed_size = 100
+    embed_size = 128
     batch_size = 128
     start_lr = 5e-4
 
-    reg = 0.001
+    reg = 0.0001
 
     dtype = tf.float32
-    keep_prob = 1.0
+    keep_prob = 0.7
 
     # max_grad_norm = 5.0
     clip_by_val = 10.0
 
-    lstm_num_hidden = 64
+    lstm_num_hidden = 128
     # dataset names
     set_names = ['train', 'val']
     # dataset suffixes
@@ -37,23 +37,23 @@ class Config:
 
     vocab_file = 'vocab.dat'
 
-    setting_prefix = 'batch_size128keep_prob1'
+    setting_prefix = 'batch_size128keep_prob07reg0001'
 
-    train_dir = 'train/{}'.format(setting_prefix)
+    train_dir = 'output/train/{}'.format(setting_prefix)
 
-    summary_dir = 'summary/{}/summary_'.format(setting_prefix)
+    summary_dir = 'output/tensorboard/{}/summary_'.format(setting_prefix)
 
-    log_dir = 'log/{}'.format(setting_prefix)
+    log_dir = 'output/log/{}'.format(setting_prefix)
 
-    fig_dir = 'fig/{}'.format(setting_prefix)
+    fig_dir = 'output/fig/{}'.format(setting_prefix)
 
-    cache_dir = 'cache/{}'.format(setting_prefix)
+    cache_dir = 'output/cache/{}'.format(setting_prefix)
 
     # start steps
     start_steps = 0
 
     # print the loss stat during training
-    print_every = 40
+    print_every = 5
     # evaluate sample during test
     sample = 100
     # save checkpoint every n iteration

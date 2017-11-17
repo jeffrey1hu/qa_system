@@ -80,6 +80,15 @@ def sequence_length(sequence_mask):
     return tf.reduce_sum(tf.cast(sequence_mask, tf.int32), axis=1)
 
 
+
+def softmax_mask_prepro(tensor, mask):  # set huge neg number(-1e10) in padding area
+    assert tensor.get_shape().ndims == mask.get_shape().ndims
+    m0 = tf.subtract(tf.constant(1.0), tf.cast(mask, 'float32'))
+    paddings = tf.multiply(m0, tf.constant(-1e10))
+    tensor = tf.where(condition=mask, x=tensor, y=paddings)
+    return tensor
+
+
 class Encoder(object):
     def __init__(self, size):
         self.size = size
@@ -206,6 +215,7 @@ class Decoder(object):
                 s_score = tf.matmul(f1, W_f_e) + B_f
                 # s_score -> (b, q)
                 s_score = tf.squeeze(s_score, axis=2)
+                s_score = softmax_mask_prepro(s_score, context_m)
                 variable_summaries(s_score)
 
             with tf.name_scope('starter_prob'):
@@ -225,6 +235,7 @@ class Decoder(object):
             with tf.name_scope('end_score'):
                 e_score = tf.matmul(f2, W_f_e) + B_f
                 e_score = tf.squeeze(e_score, axis=2)
+                e_score = softmax_mask_prepro(e_score, context_m)
                 variable_summaries(e_score)
 
             with tf.name_scope('end_prob'):
@@ -269,7 +280,7 @@ class QASystem(object):
             self.global_step = tf.Variable(cfg.start_steps, trainable=False)
             self.starter_learning_rate = tf.placeholder(tf.float32, name='start_lr')
             learning_rate = tf.train.exponential_decay(self.starter_learning_rate, self.global_step,
-                                                       250, 0.96, staircase=True)
+                                                       1000, 0.9, staircase=True)
             tf.summary.scalar('learning_rate', learning_rate)
             self.optimizer = tf.train.AdamOptimizer(learning_rate)
 
