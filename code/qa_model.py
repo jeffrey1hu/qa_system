@@ -85,7 +85,7 @@ def softmax_mask_prepro(tensor, mask):  # set huge neg number(-1e10) in padding 
     assert tensor.get_shape().ndims == mask.get_shape().ndims
     m0 = tf.subtract(tf.constant(1.0), tf.cast(mask, 'float32'))
     paddings = tf.multiply(m0, tf.constant(-1e10))
-    tensor = tf.select(mask, tensor, paddings)
+    tensor = tf.where(mask, tensor, paddings)
     return tensor
 
 
@@ -185,7 +185,7 @@ class Decoder(object):
                               decided by how you choose to implement the encoder
         :return:
         """
-        context_m = tf.cast(context_m, tf.float32)
+        context_m_float = tf.cast(context_m, tf.float32)
         # shape -> (b, q, 4n)
         H_r_shape = tf.shape(H_r)
         initializer = tf.contrib.layers.xavier_initializer()
@@ -221,7 +221,7 @@ class Decoder(object):
             with tf.name_scope('starter_prob'):
                 # the prob distribution of start index
                 s_prob = tf.nn.softmax(s_score)
-                s_prob = s_prob * context_m
+                s_prob = s_prob * context_m_float
                 variable_summaries(s_prob)
             # Hr_attend -> (batch_size, 4n)
             Hr_attend = tf.reduce_sum(H_r * tf.expand_dims(s_prob, axis=2), axis=1)
@@ -240,7 +240,7 @@ class Decoder(object):
 
             with tf.name_scope('end_prob'):
                 e_prob = tf.nn.softmax(e_score)
-                e_prob = tf.multiply(e_prob, context_m)
+                e_prob = tf.multiply(e_prob, context_m_float)
                 variable_summaries(e_prob)
 
         return s_score, e_score
