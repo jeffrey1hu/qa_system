@@ -11,9 +11,9 @@ class Config:
     # maximum length of question
     question_max_len = 25
 
-    epochs = 20
+    epochs = 10
     embed_size = 100
-    batch_size = 128
+    batch_size = 64
     start_lr = 5e-4
 
     reg = 0.0001
