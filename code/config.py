@@ -12,7 +12,7 @@ class Config:
     question_max_len = 25
 
     epochs = 20
-    embed_size = 128
+    embed_size = 100
     batch_size = 128
     start_lr = 5e-4
 
