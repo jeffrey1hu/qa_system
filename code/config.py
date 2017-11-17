@@ -13,7 +13,7 @@ class Config:
 
     epochs = 10
     embed_size = 100
-    batch_size = 64
+    batch_size = 32
     start_lr = 5e-4
 
     reg = 0.0001
@@ -37,7 +37,7 @@ class Config:
 
     vocab_file = 'vocab.dat'
 
-    setting_prefix = 'batch_size128keep_prob07reg0001'
+    setting_prefix = 'batch_size32keep_prob07reg0001'
 
     train_dir = 'output/train/{}'.format(setting_prefix)
 
