@@ -57,6 +57,6 @@ class Config:
     # evaluate sample during test
     sample = 100
     # save checkpoint every n iteration
-    save_every = 250
+    save_every = 2000
     # save every epoch
     save_every_epoch = True
