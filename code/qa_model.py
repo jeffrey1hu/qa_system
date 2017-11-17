@@ -85,7 +85,7 @@ def softmax_mask_prepro(tensor, mask):  # set huge neg number(-1e10) in padding 
     assert tensor.get_shape().ndims == mask.get_shape().ndims
     m0 = tf.subtract(tf.constant(1.0), tf.cast(mask, 'float32'))
     paddings = tf.multiply(m0, tf.constant(-1e10))
-    tensor = tf.where(condition=mask, x=tensor, y=paddings)
+    tensor = tf.select(mask, tensor, paddings)
     return tensor
 
 
